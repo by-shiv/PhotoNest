@@ -1,0 +1,50 @@
+{% load socialaccount %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>PhotoNest | Login or Register</title>
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}" />
+  </head>
+  <body>
+    <div class="auth-container">
+      <div class="left-panel">
+        <h1>PhotoNest</h1>
+        <p>Sign up to share your photos and discover creatives.</p>
+        <ul>
+          <li>Quick sign up</li>
+          <li>Showcase your art</li>
+          <li>Join the community</li>
+        </ul>
+      </div>
+      <div class="right-panel">
+        <div class="tab-buttons">
+          <button id="login-tab" class="active">Login</button>
+          <button id="register-tab">Register</button>
+        </div>
+        <div class="social-login">
+    <a href="{% provider_login_url 'google' %}" class="google-btn">
+        <img src="{% static 'img/google_logo.svg' %}" alt="Google logo" style="height:20px;vertical-align:middle;margin-right:8px;">
+        Sign in with Google
+    </a>
+</div>
+        <div class="forms-wrapper">
+          <!-- Login Form -->
+          <form id="login-form" class="form active" method="post">
+            {% csrf_token %}
+            {{ login_form.as_p }}
+            <button type="submit" name="login_submit">Sign In</button>
+          </form>
+          <!-- Register Form -->
+          <form id="register-form" class="form" method="post">
+            {% csrf_token %}
+            {{ register_form.as_p }}
+            <button type="submit" name="register_submit">Create Account</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <script src="{% static 'js/auth.js' %}"></script>
+  </body>
+</html>
