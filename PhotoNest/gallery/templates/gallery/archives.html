@@ -1,0 +1,13 @@
+{% extends 'gallery/base.html' %}
+{% block title %}Archives | PhotoNest{% endblock %}
+{% block content %}
+    <h2>Your Archives</h2>
+    <div class="image-grid">
+        {% for img in images %}
+            {% if img.image %}
+                <div class="image-card" style="background-image:url('{{ img.image.url }}');"></div>
+            {% endif %}
+        {% empty %}<p>No archived images yet!</p>
+        {% endfor %}
+    </div>
+{% endblock %}

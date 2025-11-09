@@ -1,0 +1,34 @@
+{% extends 'gallery/base.html' %}
+{% block title %}
+  {{ album.name }} | PhotoNest
+{% endblock %}
+{% block content %}
+  <h2>{{ album.name }}</h2>
+  <p style="color:#444; margin-bottom:14px;">{{ album.description }}</p>
+  <h3>Photos in this album ({{ album.images.count }})</h3>
+  <div class="image-grid">
+    {% for img in images %}
+      {% if img.image %}
+        <div class="image-card" id="img-{{ img.id }}" style="background-image:url('{{ img.image.url }}');">
+          <div class="card-actions">
+            <!-- Star for favorite -->
+            <form method="post" action="{% url 'toggle_favorite' img.id %}" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="fav-btn" title="Add to Favorites">
+                {% if img.favorite %}
+                  <span style="color:gold;">&#9733;</span>
+                {% else %}
+                  &#9733;
+                {% endif %}
+              </button>
+            </form>
+            <!-- Tick for more actions -->
+            <button class="select-btn" title="Select" onclick="showImageMenu({{ img.id }})">&#10003;</button>
+          </div>
+        </div>
+      {% endif %}
+    {% empty %}
+      <p>No images in this album yet!</p>
+    {% endfor %}
+  </div>
+{% endblock %}

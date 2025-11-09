@@ -12,3 +12,16 @@ class ImageUpload(models.Model):
     favorite = models.BooleanField(default=False)
     archived = models.BooleanField(default=False)
     trashed = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return f"{self.title or 'Image'} - {self.user.username}"
+
+class Album(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    images = models.ManyToManyField(ImageUpload, blank=True)
+    created_date = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.name} - {self.user.username}"

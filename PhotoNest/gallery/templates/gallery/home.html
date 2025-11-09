@@ -1,77 +1,44 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <title>PhotoNest Dashboard</title>
-    <link rel="stylesheet" href="{% static 'css/gallery.css' %}" />
-</head>
-<body>
-    <div class="sidebar">
-        <div class="logo">PHOTO <span>NEST</span></div>
-        <ul>
-            <li>All Photos</li>
-            <li>Videos</li>
-            <li>Albums</li>
-            <li>Documents</li>
-            <li>Favorites</li>
-            <li>People & Pets</li>
-            <li>Places</li>
-            <li>Archives</li>
-            <li>Recently added</li>
-            <li>Trash</li>
-        </ul>
-        <div class="storage">
-            <label>Storage</label>
-            <div class="bar"></div>
-            <span>5.5 GB of 15 GB used</span>
-            <a href="#">Unlock storage</a>
-        </div>
-    </div>
-    <div class="main">
-        <div class="navbar">
-            <input type="text" placeholder="Search your image" />
-            <a href="{% url 'upload_image' %}" class="upload-btn">+</a>
-            <button class="settings-btn">⚙</button>
-            <button class="profile-btn">👤</button>
-        </div>
-
-        <div class="highlights">
-            <h2>Daily Highlights</h2>
-            <div class="highlight-row">
-                {% for img in highlights %}
-                    {% if img.image %}
-                        <div class="highlight-cell"
-                             style="background-image:url('{{ img.image.url }}'); background-size:cover; background-position:center;">
-                            <!-- Or if you want an <img> tag: -->
-                            <!-- <img src="{{ img.image.url }}" alt="Daily Highlight" style="width:110px; height:70px; border-radius:18px;"> -->
-                        </div>
+{% extends 'gallery/base.html' %}
+{% block title %}
+  All Photos | PhotoNest
+{% endblock %}
+{% block content %}
+  <h2>Daily Highlights</h2>
+  <div class="highlight-row">
+    {% for img in highlights %}
+      {% if img.image %}
+        <div class="highlight-cell" style="background-image:url('{{ img.image.url }}');"></div>
+      {% endif %}
+    {% empty %}
+      <div>No highlights yet!</div>
+    {% endfor %}
+  </div>
+  <div class="images-month">
+    {% for month, imgs in images_by_month.items %}
+      <h3>{{ month }}</h3>
+      <div class="image-grid">
+        {% for img in imgs %}
+          {% if img.image %}
+            <div class="image-card" id="img-{{ img.id }}" style="background-image:url('{{ img.image.url }}');">
+              <div class="card-actions">
+                <!-- Star for favorite -->
+                <form method="post" action="{% url 'toggle_favorite' img.id %}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="fav-btn" title="Add to Favorites">
+                    {% if img.favorite %}
+                      <span style="color:gold;">&#9733;</span>
+                    {% else %}
+                      &#9733;
                     {% endif %}
-                {% empty %}
-                    <div>No highlights yet!</div>
-                {% endfor %}
+                  </button>
+                </form>
+                <!-- Tick for more actions -->
+                <button class="select-btn" title="Select" onclick="showImageMenu({{ img.id }})">&#10003;</button>
+              </div>
             </div>
-        </div>
-
-        <div class="images-month">
-            {% for month, imgs in images_by_month.items %}
-                <h3>{{ month }}</h3>
-                <div class="image-grid">
-                    {% for img in imgs %}
-                        {% if img.image %}
-                            <div class="image-card" style="background-image:url('{{ img.image.url }}'); background-size:cover; background-position:center;">
-                                <div class="card-actions">
-                                    <button class="select-btn">&#10003;</button>
-                                    <button class="fav-btn">&#9733;</button>
-                                </div>
-                                <!-- Or use <img src="{{ img.image.url }}" alt="gallery photo" class="gallery-image"> -->
-                            </div>
-                        {% endif %}
-                    {% endfor %}
-                </div>
-            {% endfor %}
-        </div>
-    </div>
-    <script src="{% static 'js/gallery.js' %}"></script>
-</body>
-</html>
+          {% endif %}
+        {% endfor %}
+      </div>
+    {% endfor %}
+  </div>
+{% endblock %}
