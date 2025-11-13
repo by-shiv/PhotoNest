@@ -44,7 +44,8 @@
     </div>
     <div class="main">
       <div class="navbar">
-        <input type="text" placeholder="Search your image" />
+        <input type="text" id="live-search-input" placeholder="Search your image" autocomplete="off" style="flex-grow: 1; padding: 7px 12px; border-radius: 7px; border: 1px solid #b9eecb;" />
+        <div id="live-search-results" class="live-search-results"></div>
         <a href="{% url 'upload_image' %}" class="upload-btn">+</a>
         <button class="settings-btn">⚙</button>
         <button class="profile-btn">👤</button>
@@ -56,10 +57,36 @@
         <button onclick="shareImage()" title="Share" aria-label="Share">&#128257;</button>
       </div>
 
+      <div id="album-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+          <span class="close" onclick="closeAlbumModal()">&times;</span>
+          <h3>Select images to add to album</h3>
+          <div id="album-image-list" class="album-image-list">
+            <!-- Images will dynamically populate here -->
+          </div>
+          <button onclick="saveAlbumImages()">Save</button>
+        </div>
+      </div>
+
+      <div id="create-album-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+          <span class="close" onclick="closeCreateAlbumModal()">&times;</span>
+          <h3>Create Album</h3>
+          <form id="create-album-form">
+            <input type="text" name="name" id="new-album-name" placeholder="Album name" required /><br /><br />
+            <textarea name="description" id="new-album-desc" placeholder="Description"></textarea><br /><br />
+            <input type="hidden" name="images" id="create-album-image-ids" />
+            <button type="submit">Create</button>
+          </form>
+        </div>
+      </div>
+
       <div class="content">
         {% block content %}
+
         {% endblock %}
       </div>
     </div>
+    <script src="{% static 'js/gallery.js' %}"></script>
   </body>
 </html>

@@ -1,13 +1,21 @@
 {% extends 'gallery/base.html' %}
-{% block title %}Archives | PhotoNest{% endblock %}
+{% block title %}
+  Archives | PhotoNest
+{% endblock %}
 {% block content %}
-    <h2>Your Archives</h2>
-    <div class="image-grid">
-        {% for img in images %}
-            {% if img.image %}
-                <div class="image-card" style="background-image:url('{{ img.image.url }}');"></div>
-            {% endif %}
-        {% empty %}<p>No archived images yet!</p>
-        {% endfor %}
-    </div>
+  <h2>Your Archives</h2>
+  <div class="image-grid">
+    {% for img in images %}
+      {% if img.image %}
+        <div class="image-card" style="background-image:url('{{ img.image.url }}');">
+          <div class="card-actions">
+            <!-- Unarchive icon on hover -->
+            <button class="unarchive-btn" title="Unarchive" onclick="unarchiveImage({{ img.id }})">&#8635;</button>
+          </div>
+        </div>
+      {% endif %}
+    {% empty %}
+      <p>No archived images yet!</p>
+    {% endfor %}
+  </div>
 {% endblock %}

@@ -5,13 +5,15 @@
 {% block content %}
   <h2>{{ album.name }}</h2>
   <p style="color:#444; margin-bottom:14px;">{{ album.description }}</p>
+  <button onclick="openAlbumModal({{ album.id }})" class="btn btn-primary">Add Images to Album</button>
   <h3>Photos in this album ({{ album.images.count }})</h3>
   <div class="image-grid">
     {% for img in images %}
       {% if img.image %}
         <div class="image-card" id="img-{{ img.id }}" style="background-image:url('{{ img.image.url }}');">
           <div class="card-actions">
-            <!-- Star for favorite -->
+            <!-- Remove from Album button -->
+            <button class="remove-btn" title="Remove from Album" onclick="removeFromAlbum({{ album.id }}, {{ img.id }}, this)">&#10060;</button>
             <form method="post" action="{% url 'toggle_favorite' img.id %}" style="display:inline;">
               {% csrf_token %}
               <button type="submit" class="fav-btn" title="Add to Favorites">
@@ -22,7 +24,7 @@
                 {% endif %}
               </button>
             </form>
-            <!-- Tick for more actions -->
+            <!-- Tick mark -->
             <button class="select-btn" title="Select" onclick="showImageMenu({{ img.id }})">&#10003;</button>
           </div>
         </div>

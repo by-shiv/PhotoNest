@@ -1,15 +1,18 @@
 {% extends 'gallery/base.html' %}
-{% block title %}Albums | PhotoNest{% endblock %}
+{% block title %}
+  Albums | PhotoNest
+{% endblock %}
 {% block content %}
-    <h2>Your Albums</h2>
-    <div class="album-list">
-        {% for album in albums %}
-            <div class="album-card">
-                <h3>{{ album.name }}</h3>
-                <p>{{ album.description }}</p>
-                <span>{{ album.images.count }} images</span>
-            </div>
-        {% empty %}<p>No albums yet!</p>
-        {% endfor %}
-    </div>
+  <h2>Your Albums</h2>
+  <div class="album-list">
+    {% for album in albums %}
+      <div class="album-card" style="cursor:pointer;" onclick="window.location='{% url 'album_detail' album.id %}'">
+        <h3>{{ album.name }}</h3>
+        <p>{{ album.description }}</p>
+        <span>{{ album.images.count }} images</span>
+      </div>
+    {% empty %}
+      <p>No albums yet!</p>
+    {% endfor %}
+  </div>
 {% endblock %}
