@@ -16,6 +16,7 @@ class ImageUpload(models.Model):
     favorite = models.BooleanField(default=False)
     archived = models.BooleanField(default=False)
     trashed = models.BooleanField(default=False)
+    ai_tags = models.TextField(blank=True, null=True)
     
     def __str__(self):
         return f"{self.title or 'Image'} - {self.user.username}"

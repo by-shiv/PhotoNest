@@ -3,4 +3,5 @@ db.sqlite3
 .env
 __pycache__/
 media/
+photonest-auth-474115-3dee0eebb2f7.json
 *.pyc

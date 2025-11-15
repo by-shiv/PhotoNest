@@ -10,11 +10,24 @@ from django.db.models import Q
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
-import json
+import json, os
 from django.contrib.auth.models import User
 from .models import UserProfile
 from django import forms
 from django.contrib.auth import get_user_model
+from google.cloud import vision
+
+def analyze_image(filepath):
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "photonest-auth-474115-3dee0eebb2f7.json"
+    client = vision.ImageAnnotatorClient()
+
+    with open(filepath, "rb") as image_file:
+        content = image_file.read()
+    image = vision.Image(content=content)
+    response = client.label_detection(image=image)
+    labels = [label.description for label in response.label_annotations]
+    return labels
+
 
 
 
@@ -49,10 +62,28 @@ def upload_image(request):
         audio_note = request.FILES.get('audio_note')
 
         for f in files:
-            obj = ImageUpload(user=request.user, image=f, title=title, tags=tags, description=description)
+            obj = ImageUpload(
+                user=request.user, 
+                image=f, 
+                title=title, 
+                tags=tags, 
+                description=description
+            )
             if audio_note:
                 obj.audio_note = audio_note
             obj.save()
+
+            try:
+                vision_labels = analyze_image(obj.image.path)
+                obj.ai_tags = ', '.join(vision_labels)
+                print(f"[AI TAGS] For {obj.image.name}: {obj.ai_tags}")
+                obj.save()
+            except Exception as e:
+                print(f"[Vision ERROR] {e}")
+                obj.ai_tags = ""
+                obj.save()
+
+            
 
         return redirect('gallery_home')
 
