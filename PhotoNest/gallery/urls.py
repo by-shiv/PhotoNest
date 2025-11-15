@@ -32,5 +32,4 @@ urlpatterns = [
     path('image/<int:image_id>/delete/', delete_permanently, name='delete_permanently'),
     path('profile/', profile_view, name='profile'),
     path('profile/edit/', profile_edit, name='profile_edit'),
-    path('logout/', auth_views.LogoutView.as_view(next_page='/'), name='logout'),
 ]
