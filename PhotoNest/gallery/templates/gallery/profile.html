@@ -1,0 +1,37 @@
+{% extends 'gallery/base.html' %}
+{% block content %}
+<div class="profile-page">
+    <div class="profile-pic-container">
+        {% if profile.profile_pic %}
+            <img src="{{ profile.profile_pic.url }}" alt="Profile Picture" class="profile-pic"/>
+        {% else %}
+            <div class="profile-pic-placeholder">No photo</div>
+        {% endif %}
+    </div>
+    <h2>{{ request.user.get_full_name }}</h2>
+    <p>{{ request.user.email }}</p>
+
+    <h3>Favorites</h3>
+    <div class="favorites-list">
+        {% for img in favorites %}
+            <a href="{% url 'gallery_home' %}#img-{{ img.id }}" class="fav-thumb" style="background-image: url('{{ img.image.url }}')"></a>
+        {% empty %}
+            <p>No favorites yet.</p>
+        {% endfor %}
+    </div>
+
+    <h3>Albums</h3>
+    <div class="albums-list">
+        {% for album in albums %}
+        <a href="{% url 'album_detail' album.id %}" class="album-thumb">{{ album.name }} <span>({{ album.images.count }})</span></a>
+        {% empty %}
+            <p>No albums yet.</p>
+        {% endfor %}
+    </div>
+
+    <div class="profile-actions">
+        <a href="{% url 'profile_edit' %}" class="btn btn-primary">Edit Profile</a>
+        <a href="{% url 'logout' %}" class="btn btn-secondary">Log Out</a>
+    </div>
+</div>
+{% endblock %}

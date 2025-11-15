@@ -4,8 +4,9 @@ from .views import (
     trash, recently_added, albums_list, album_detail,
     toggle_favorite, toggle_archive, move_to_trash,
     restore_from_trash, delete_permanently, live_search_api, album_create, album_edit, update_album_images,
-    user_images_api, create_album_with_images, remove_from_album
+    user_images_api, create_album_with_images, remove_from_album, profile_view, profile_edit
 )
+from django.contrib.auth import views as auth_views
 
 
 urlpatterns = [
@@ -29,4 +30,7 @@ urlpatterns = [
     path('image/<int:image_id>/trash/', move_to_trash, name='move_to_trash'),
     path('image/<int:image_id>/restore/', restore_from_trash, name='restore_from_trash'),
     path('image/<int:image_id>/delete/', delete_permanently, name='delete_permanently'),
+    path('profile/', profile_view, name='profile'),
+    path('profile/edit/', profile_edit, name='profile_edit'),
+    path('logout/', auth_views.LogoutView.as_view(next_page='/'), name='logout'),
 ]

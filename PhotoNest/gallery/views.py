@@ -11,6 +11,11 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 import json
+from django.contrib.auth.models import User
+from .models import UserProfile
+from django import forms
+from django.contrib.auth import get_user_model
+
 
 
 @login_required
@@ -34,19 +39,25 @@ def gallery_home(request):
         'highlights': highlights,
     })
 
-
 @login_required
 def upload_image(request):
     if request.method == 'POST':
-        form = ImageUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            obj = form.save(commit=False)
-            obj.user = request.user
+        files = request.FILES.getlist('images')
+        title = request.POST.get('title', '').strip()
+        tags = request.POST.get('tags', '').strip()
+        description = request.POST.get('description', '').strip()
+        audio_note = request.FILES.get('audio_note')
+
+        for f in files:
+            obj = ImageUpload(user=request.user, image=f, title=title, tags=tags, description=description)
+            if audio_note:
+                obj.audio_note = audio_note
             obj.save()
-            return redirect('gallery_home')
-    else:
-        form = ImageUploadForm()
-    return render(request, 'gallery/upload.html', {'form': form})
+
+        return redirect('gallery_home')
+
+    return render(request, 'gallery/upload.html')
+
 
 
 @login_required
@@ -242,3 +253,55 @@ def remove_from_album(request, album_id, image_id):
     image = get_object_or_404(ImageUpload, id=image_id, user=request.user)
     album.images.remove(image)
     return JsonResponse({'success': True})
+
+
+'''profile option and settings'''
+
+from .models import UserProfile
+from django.shortcuts import redirect
+
+@login_required
+def profile_view(request):
+    user = request.user
+    try:
+        profile = user.userprofile
+    except UserProfile.DoesNotExist:
+        profile = UserProfile.objects.create(user=user)
+    favorites = ImageUpload.objects.filter(user=request.user, favorite=True)
+    albums = Album.objects.filter(user=request.user)
+    return render(request, 'gallery/profile.html', {
+        'profile': profile,
+        'favorites': favorites,
+        'albums': albums,
+    })
+
+
+class ProfileEditForm(forms.ModelForm):
+    class Meta:
+        model = get_user_model()
+        fields = ['first_name', 'last_name', 'email']
+
+class UserProfileForm(forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = ['profile_pic']
+
+
+
+@login_required
+def profile_edit(request):
+    profile = request.user.userprofile
+    if request.method == 'POST':
+        user_form = ProfileEditForm(request.POST, instance=request.user)
+        profile_form = UserProfileForm(request.POST, request.FILES, instance=profile)
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            profile_form.save()
+            return redirect('profile')
+    else:
+        user_form = ProfileEditForm(instance=request.user)
+        profile_form = UserProfileForm(instance=profile)
+    return render(request, 'gallery/profile_edit.html', {
+        'user_form': user_form,
+        'profile_form': profile_form,
+    })

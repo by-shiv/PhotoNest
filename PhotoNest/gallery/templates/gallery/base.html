@@ -47,8 +47,29 @@
         <input type="text" id="live-search-input" placeholder="Search your image" autocomplete="off" style="flex-grow: 1; padding: 7px 12px; border-radius: 7px; border: 1px solid #b9eecb;" />
         <div id="live-search-results" class="live-search-results"></div>
         <a href="{% url 'upload_image' %}" class="upload-btn">+</a>
-        <button class="settings-btn">⚙</button>
-        <button class="profile-btn">👤</button>
+
+        <div class="dropdown settings-dropdown">
+          <button class="dropbtn settings-btn">⚙</button>
+          <div class="dropdown-content">
+            <a href="#">Privacy</a>
+            <a href="#">Storage setting</a>
+            <a href="#">Backup and sync</a>
+            <a href="#">Appearance</a>
+            <a href="#">Help and support</a>
+          </div>
+        </div>
+        
+        <div class="dropdown profile-dropdown">
+          <button class="dropbtn profile-btn">👤</button>
+          <div class="dropdown-content">
+            <a href="{% url 'profile' %}">My profile</a>
+            <a href="#">Activity</a>
+            <a href="#">Profile setting</a>
+            <a href="#">Switch account</a>
+            <a href="{% url 'logout' %}">Logout</a> <!-- Logout inside profile dropdown -->
+          </div>
+        </div>
+
       </div>
       <div id="actions-navbar" class="actions-bar" style="display:none;">
         <button onclick="deleteImage()" title="Delete" aria-label="Delete">&#128465;</button>

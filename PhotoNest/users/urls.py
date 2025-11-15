@@ -5,3 +5,4 @@ urlpatterns = [
     path('auth/', auth_view, name='auth'),
     path('logout/', CustomLogoutView.as_view(), name='logout'),
 ]
+

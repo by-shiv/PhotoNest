@@ -1,29 +1,66 @@
 {% extends 'gallery/base.html' %}
-{% block title %}Upload Image | PhotoNest{% endblock %}
+{% block title %}Upload Images | PhotoNest{% endblock %}
 {% block content %}
-    <h2>Upload Image</h2>
-    <form method="post" enctype="multipart/form-data" class="upload-form">
-        {% csrf_token %}
-        <div>
-            <label for="id_image">Image File</label>
-            {{ form.image }}
-        </div>
-        <div>
-            <label for="id_title">Title</label>
-            {{ form.title }}
-        </div>
-        <div>
-            <label for="id_tags">Tags (comma separated)</label>
-            {{ form.tags }}
-        </div>
-        <div>
-            <label for="id_description">Description</label>
-            {{ form.description }}
-        </div>
-        <div>
-            <label for="id_audio_note">Audio Note (optional)</label>
-            {{ form.audio_note }}
-        </div>
-        <button type="submit" class="upload-btn">Upload</button>
-    </form>
+  <h2>Upload Images</h2>
+  <form method="post" enctype="multipart/form-data" class="upload-form" id="upload-form">
+    {% csrf_token %}
+
+    <div id="drop-zone" class="upload-drop-zone" tabindex="0">
+      <span>Drag & drop files here or click to select</span>
+      <input 
+        type="file" 
+        name="images" 
+        id="id_images" 
+        multiple 
+        style="display:none;" 
+        accept="image/*,image/heic"
+      />
+    </div>
+
+    <div>
+      <label for="id_title">Title (applied to all images)</label>
+      <input type="text" name="title" id="id_title" />
+    </div>
+    <div>
+      <label for="id_tags">Tags (comma separated)</label>
+      <input type="text" name="tags" id="id_tags" />
+    </div>
+    <div>
+      <label for="id_description">Description</label>
+      <textarea name="description" id="id_description"></textarea>
+    </div>
+    <div>
+      <label for="id_audio_note">Audio Note (optional)</label>
+      <input type="file" name="audio_note" id="id_audio_note" accept="audio/*" />
+    </div>
+    <button type="submit" class="upload-btn">Upload</button>
+  </form>
+
+  <script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('id_images');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      fileInput.files = e.dataTransfer.files;
+      dropZone.querySelector('span').textContent = `${fileInput.files.length} file(s) selected`;
+    });
+
+    fileInput.addEventListener('change', () => {
+      dropZone.querySelector('span').textContent = `${fileInput.files.length} file(s) selected`;
+    });
+  </script>
+
 {% endblock %}

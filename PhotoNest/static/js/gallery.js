@@ -255,3 +255,18 @@ function removeFromAlbum(albumId, imageId, btn) {
 }
 
 
+//dropdown
+
+document.querySelectorAll('.dropbtn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const dropdown = btn.nextElementSibling;
+    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+  });
+});
+window.addEventListener('click', function(event) {
+  if (!event.target.matches('.dropbtn')) {
+    document.querySelectorAll('.dropdown-content').forEach(dc => {
+      dc.style.display = 'none';
+    });
+  }
+});
