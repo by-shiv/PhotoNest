@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import ImageUpload, Album, UserProfile
 
 class ImageUploadAdmin(admin.ModelAdmin):
-    list_display = ('id', 'title', 'user', 'favorite', 'archived', 'trashed', 'upload_date', 'ai_tags')
+    list_display = ('id', 'title', 'user', 'favorite', 'archived', 'trashed', 'upload_date','tags', 'ai_tags')
     search_fields = ('title', 'user__username', 'tags', 'ai_tags')
     list_filter = ('favorite', 'archived', 'trashed', 'upload_date')
 

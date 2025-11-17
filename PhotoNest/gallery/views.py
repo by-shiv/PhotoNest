@@ -187,7 +187,7 @@ def live_search_api(request):
         user=request.user,
         trashed=False
     ).filter(
-        Q(title__icontains=query) | Q(tags__icontains=query) | Q(description__icontains=query)
+        Q(title__icontains=query) | Q(tags__icontains=query) | Q(description__icontains=query) | Q(ai_tags__icontains=query)
     ).order_by('-upload_date')[:20]
 
     results = []
