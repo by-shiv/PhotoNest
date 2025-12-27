@@ -27,7 +27,7 @@ function hideImageMenu() {
     selectedImageId = null;
 }
 
-// Example: handle Delete click (make actual requests using fetch/AJAX for real app)
+// handle Delete click (make actual requests using fetch/AJAX for real app)
 function deleteImage() {
     if (selectedImageId) {
         window.location.href = '/gallery/image/' + selectedImageId + '/delete/';

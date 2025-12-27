@@ -169,10 +169,10 @@ def restore_from_trash(request, image_id):
 @login_required
 def delete_permanently(request, image_id):
     image = get_object_or_404(ImageUpload, id=image_id, user=request.user)
-    image.image.delete()  # Delete file from storage
+    image.image.delete() 
     if image.audio_note:
         image.audio_note.delete()
-    image.delete()  # Delete from database
+    image.delete()  
     return redirect('trash')
 
 
