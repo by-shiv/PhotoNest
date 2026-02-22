@@ -1,0 +1,126 @@
+body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(120deg, #b3a5ff 0%, #6ee2f5 100%);
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+
+.auth-container {
+    width: 70vw;
+    max-width: 950px;
+    min-height: 70vh;
+    margin: 5vh auto;
+    display: flex;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(50, 50, 80, 0.2);
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.left-panel {
+    flex: 1;
+    padding: 3rem 2rem;
+}
+
+.left-panel h1 {
+    color: #7f3cff;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.right-panel {
+    flex: 1.1;
+    padding: 2.5rem 2rem;
+    background: #fff;
+}
+
+.tab-buttons {
+    margin-bottom: 1.8rem;
+    width: 100%;
+    display: flex;
+}
+
+.tab-buttons button {
+    flex: 1;
+    padding: 1rem;
+    background: none;
+    border: none;
+    color: #7f3cff;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+}
+
+.tab-buttons button.active {
+    color: #222;
+    border-bottom: 3px solid #7f3cff;
+}
+
+.forms-wrapper {
+    width: 100%;
+    position: relative;
+    min-height: 300px;
+}
+
+.form {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(40px);
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.form.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+}
+
+.form button {
+    background: linear-gradient(100deg, #7f3cff, #6ee2f5);
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 0.8rem 2rem;
+    margin-top: 1rem;
+    cursor: pointer;
+}
+
+.logout-btn {
+    color: #7f3cff;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+@media (max-width: 850px) {
+    .auth-container {
+        flex-direction: column;
+        width: 97vw;
+    }
+}
+
+
+/*
+Social Login Button Styles
+*/
+
+.google-btn {
+    display: inline-block;
+    background: #fff;
+    color: #444;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 0.6em 1em;
+    font-size: 1.07em;
+    margin-bottom: 1.2em;
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+    box-shadow: 0 1px 3px rgba(60,60,70,0.045);
+}
+.google-btn:hover {
+    box-shadow: 0 3px 12px rgba(60,60,70,0.15);
+    background: #f7f7f7;
+}

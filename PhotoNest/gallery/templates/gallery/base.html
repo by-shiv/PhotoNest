@@ -1,0 +1,116 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>
+      {% block title %}
+        PhotoNest Gallery
+      {% endblock %}
+    </title>
+    <link rel="stylesheet" href="{% static 'css/gallery.css' %}" />
+  </head>
+  <body>
+    <div class="sidebar">
+      <div class="logo">
+        PHOTO <span>NEST</span>
+      </div>
+      <ul>
+        <li>
+          <a href="{% url 'gallery_home' %}">All Photos</a>
+        </li>
+        <li>
+          <a href="{% url 'favorites' %}">Favorites</a>
+        </li>
+        <li>
+          <a href="{% url 'albums_list' %}">Albums</a>
+        </li>
+        <li>
+          <a href="{% url 'archives' %}">Archives</a>
+        </li>
+        <li>
+          <a href="#">Generated Images</a>
+        </li>
+        <li>
+          <a href="{% url 'recently_added' %}">Recently Added</a>
+        </li>
+        <li>
+          <a href="{% url 'trash' %}">Trash</a>
+        </li>
+      </ul>
+      <div class="storage">
+        <label>Storage</label>
+        <div class="bar"></div>
+        <span>Deatails Unavailable</span>
+        <a href="#">Unlock storage</a>
+      </div>
+    </div>
+    <div class="main">
+      <div class="navbar">
+        <input type="text" id="live-search-input" placeholder="Search your image" autocomplete="off" style="flex-grow: 1; padding: 7px 12px; border-radius: 7px; border: 1px solid #b9eecb;" />
+        <div id="live-search-results" class="live-search-results"></div>
+        <a href="{% url 'upload_image' %}" class="upload-btn">+</a>
+
+        <div class="dropdown settings-dropdown">
+          <button class="dropbtn settings-btn">⚙</button>
+          <div class="dropdown-content">
+            <a href="#">Privacy</a>
+            <a href="#">Storage setting</a>
+            <a href="#">Backup and sync</a>
+            <a href="#">Help and support</a>
+          </div>
+        </div>
+        
+        <div class="dropdown profile-dropdown">
+          <button class="dropbtn profile-btn">👤</button>
+          <div class="dropdown-content">
+            <a href="{% url 'profile' %}">My profile</a>
+            <a href="#">Activity</a>
+            <a href="#">Profile setting</a>
+            <a href="#">Switch account</a>
+            <a href="{% url 'account_logout' %}">Logout</a>
+          </div>
+          
+        </div>
+
+      </div>
+      <div id="actions-navbar" class="actions-bar" style="display:none;">
+        <button onclick="deleteImage()" title="Delete" aria-label="Delete">&#128465;</button>
+        <button onclick="addToAlbum()" title="Add to Album" aria-label="Add to Album">&#127916;</button>
+        <button onclick="archiveImage()" title="Archive" aria-label="Archive">&#128230;</button>
+        <button onclick="shareImage()" title="Share" aria-label="Share">&#128257;</button>
+      </div>
+
+      <div id="album-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+          <span class="close" onclick="closeAlbumModal()">&times;</span>
+          <h3>Select images to add to album</h3>
+          <div id="album-image-list" class="album-image-list">
+            <!-- Images will dynamically populate here -->
+          </div>
+          <button onclick="saveAlbumImages()">Save</button>
+        </div>
+      </div>
+
+      <div id="create-album-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+          <span class="close" onclick="closeCreateAlbumModal()">&times;</span>
+          <h3>Create Album</h3>
+          <form id="create-album-form">
+            <input type="text" name="name" id="new-album-name" placeholder="Album name" required /><br /><br />
+            <textarea name="description" id="new-album-desc" placeholder="Description"></textarea><br /><br />
+            <input type="hidden" name="images" id="create-album-image-ids" />
+            <button type="submit">Create</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="content">
+        {% block content %}
+
+        {% endblock %}
+      </div>
+    </div>
+    <script src="{% static 'js/gallery.js' %}"></script>
+  </body>
+</html>

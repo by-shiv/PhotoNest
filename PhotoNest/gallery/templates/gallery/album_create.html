@@ -1,0 +1,11 @@
+{% extends 'gallery/base.html' %}
+{% block title %}Create Album | PhotoNest{% endblock %}
+{% block content %}
+<h2>Create New Album</h2>
+<form method="post" class="album-form">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Create Album</button>
+    <a href="{% url 'albums_list' %}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

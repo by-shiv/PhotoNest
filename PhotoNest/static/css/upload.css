@@ -1,0 +1,42 @@
+body {
+    background: #fafafd;
+    font-family: sans-serif;
+}
+
+.upload-container {
+    width: 430px;
+    margin: 60px auto;
+    background: #fff;
+    border-radius: 14px;
+    padding: 28px;
+    box-shadow: 0 4px 14px rgba(110, 160, 245, 0.091);
+}
+
+.upload-container h2 {
+    margin-bottom: 18px;
+    color: #2554c7;
+}
+
+form label {
+    display: block;
+    margin-top: 13px;
+}
+
+form input,
+form textarea {
+    width: 96%;
+    padding: 8px;
+    margin-bottom: 13px;
+    border-radius: 7px;
+    border: 1px solid #ddd;
+}
+
+.submit-btn {
+    background: linear-gradient(100deg, #7f3cff, #6ee2f5);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 28px;
+    font-size: 1.1em;
+    cursor: pointer;
+}
