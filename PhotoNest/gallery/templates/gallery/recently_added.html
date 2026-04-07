@@ -1,13 +1,16 @@
 {% extends 'gallery/base.html' %}
 {% block title %}Recently Added | PhotoNest{% endblock %}
 {% block content %}
-    <h2>Recently Added</h2>
-    <div class="image-grid">
-        {% for img in images %}
-            {% if img.image %}
-                <div class="image-card" style="background-image:url('{{ img.image.url }}');"></div>
-            {% endif %}
-        {% empty %}<p>No recently added images!</p>
-        {% endfor %}
-    </div>
+  <h2>Recently Added</h2>
+  <div class="image-grid">
+    {% for img in images %}
+      {% if img.image %}
+        <a href="{% url 'image_detail' img.id %}" class="image-card-link">
+          <div class="image-card" style="background-image:url('{{ img.image.url }}');"></div>
+        </a>
+      {% endif %}
+    {% empty %}
+      <p>No recently added images!</p>
+    {% endfor %}
+  </div>
 {% endblock %}

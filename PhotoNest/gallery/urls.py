@@ -1,10 +1,11 @@
 from django.urls import path
 from .views import (
-    gallery_home, upload_image, favorites, archives, 
+    gallery_home, upload_image, favorites, archives,
     trash, recently_added, albums_list, album_detail,
     toggle_favorite, toggle_archive, move_to_trash,
     restore_from_trash, delete_permanently, live_search_api, album_create, album_edit, update_album_images,
-    user_images_api, create_album_with_images, remove_from_album, profile_view, profile_edit
+    user_images_api, create_album_with_images, remove_from_album, profile_view, profile_edit,
+    image_detail, download_image
 )
 from django.contrib.auth import views as auth_views
 
@@ -32,4 +33,6 @@ urlpatterns = [
     path('image/<int:image_id>/delete/', delete_permanently, name='delete_permanently'),
     path('profile/', profile_view, name='profile'),
     path('profile/edit/', profile_edit, name='profile_edit'),
+    path('image/<int:image_id>/', image_detail, name='image_detail'),
+    path('image/<int:image_id>/download/', download_image, name='download_image'),
 ]

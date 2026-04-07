@@ -694,3 +694,242 @@ h3 {
 .btn-cancel:hover {
     background: #bbb;
 }
+
+.detail-wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.detail-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.back-link {
+  text-decoration: none;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.detail-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 0.9fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.detail-media,
+.detail-sidebar,
+.image-card {
+  background: var(--color-surface);
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+}
+
+.detail-image {
+  width: 100%;
+  display: block;
+  max-height: 760px;
+  object-fit: contain;
+  background: #000;
+}
+
+.detail-sidebar {
+  padding: 24px;
+}
+
+.detail-sidebar h1 {
+  margin-bottom: 8px;
+}
+
+.detail-meta {
+  color: var(--color-text-muted);
+  margin-bottom: 20px;
+}
+
+.detail-block {
+  margin-bottom: 20px;
+}
+
+.detail-block h2,
+.section-head h2 {
+  font-size: 1rem;
+  margin-bottom: 8px;
+  color: var(--color-text);
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--color-surface-offset);
+  font-size: 0.85rem;
+}
+
+.tag-ai {
+  background: rgba(1, 105, 111, 0.12);
+  color: var(--color-primary);
+}
+
+.album-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.album-links li + li {
+  margin-top: 8px;
+}
+
+.album-links a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.similar-section {
+  margin-top: 32px;
+}
+
+.section-head {
+  margin-bottom: 16px;
+}
+
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.image-card {
+  text-decoration: none;
+  color: inherit;
+}
+
+.image-card img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  display: block;
+}
+
+.image-card-body {
+  padding: 14px;
+}
+
+.image-card-body h3 {
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.image-card-body p,
+.empty-note {
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+}
+
+@media (max-width: 900px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  padding: 10px;
+}
+
+.image-card-link {
+  display: block;
+  text-decoration: none;
+}
+
+.image-card {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-bottom: 100%;        /* square aspect */
+  background-size: cover;
+  background-position: center;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.image-card::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(0deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 60%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.image-card:hover::after {
+  opacity: 1;
+}
+
+.card-actions {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  display: flex;
+  gap: 4px;
+}
+
+.image-card button,
+.image-card .fav-btn,
+.image-card .select-btn,
+.image-card .remove-btn,
+.image-card .unarchive-btn {
+  background: rgba(255,255,255,0.95);
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+}
+
+.image-card button:hover {
+  background: rgb(88, 188, 250);
+}
+
+.image-card {
+  position: relative;
+}
+
+.image-link-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.card-actions {
+  position: relative;
+  z-index: 2;
+}

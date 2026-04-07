@@ -16,6 +16,10 @@ from .models import UserProfile
 from django import forms
 from django.contrib.auth import get_user_model
 from google.cloud import vision
+from django.db.models import Count
+from django.http import HttpResponseForbidden, FileResponse
+from urllib.parse import quote
+
 
 def analyze_image(filepath):
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "photonest-auth-474115-3dee0eebb2f7.json"
@@ -27,6 +31,96 @@ def analyze_image(filepath):
     response = client.label_detection(image=image)
     labels = [label.description for label in response.label_annotations]
     return labels
+
+
+
+
+def _split_tags(raw):
+    if not raw:
+        return []
+    return [t.strip() for t in raw.split(",") if t.strip()]
+
+
+def _normalized_tags(raw):
+    if not raw:
+        return []
+    return [t.strip().lower() for t in raw.split(",") if t.strip()]
+
+
+def _similar_images_for(image, user, limit=8):
+    current_tags = set(_normalized_tags(image.tags) + _normalized_tags(image.ai_tags))
+
+    base_queryset = ImageUpload.objects.filter(
+        user=user,
+        trashed=False,
+        archived=False
+    ).exclude(id=image.id)
+
+    if not current_tags:
+        return list(base_queryset.order_by("-upload_date")[:limit])
+
+    scored = []
+    for candidate in base_queryset:
+        candidate_tags = set(_normalized_tags(candidate.tags) + _normalized_tags(candidate.ai_tags))
+        score = len(current_tags & candidate_tags)
+
+        if score > 0:
+            scored.append((score, candidate))
+
+    scored.sort(
+        key=lambda x: (
+            -x[0],
+            -(x[1].upload_date.timestamp() if x[1].upload_date else 0)
+        )
+    )
+
+    return [item[1] for item in scored[:limit]]
+
+
+@login_required
+def image_detail(request, image_id):
+    image = get_object_or_404(
+        ImageUpload,
+        id=image_id,
+        user=request.user
+    )
+
+    album_list = Album.objects.filter(
+        user=request.user,
+        images=image
+    ).order_by("-created_date")
+
+    similar_images = _similar_images_for(image, request.user, limit=8)
+
+    tags_list = _split_tags(image.tags)
+    ai_tags_list = _split_tags(image.ai_tags)
+
+    return render(request, "gallery/image_detail.html", {
+        "image": image,
+        "album_list": album_list,
+        "similar_images": similar_images,
+        "tags_list": tags_list,
+        "ai_tags_list": ai_tags_list,
+    })
+
+
+@login_required
+def download_image(request, image_id):
+    image = get_object_or_404(
+        ImageUpload,
+        id=image_id,
+        user=request.user
+    )
+
+    if not image.image:
+        return HttpResponseForbidden("No image file found.")
+
+    filename = image.image.name.split("/")[-1]
+    return FileResponse(
+        image.image.open("rb"),
+        as_attachment=True,
+        filename=filename
+    )
 
 
 
