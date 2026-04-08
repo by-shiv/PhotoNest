@@ -9,30 +9,17 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.contrib import messages
 from django.views.decorators.http import require_POST
-from django.views.decorators.csrf import csrf_exempt
-import json, os
-from django.contrib.auth.models import User
+import json
 from .models import UserProfile
 from django import forms
 from django.contrib.auth import get_user_model
-from google.cloud import vision
-from django.db.models import Count
 from django.http import HttpResponseForbidden, FileResponse
-from urllib.parse import quote
-
-
-def analyze_image(filepath):
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "photonest-auth-474115-3dee0eebb2f7.json"
-    client = vision.ImageAnnotatorClient()
-
-    with open(filepath, "rb") as image_file:
-        content = image_file.read()
-    image = vision.Image(content=content)
-    response = client.label_detection(image=image)
-    labels = [label.description for label in response.label_annotations]
-    return labels
-
-
+from .services.vision import get_labels
+from .services.tag_pipeline import process_tags
+from threading import Thread
+from collections import defaultdict
+from .services.image_processing import compress_image
+from collections import OrderedDict
 
 
 def _split_tags(raw):
@@ -48,33 +35,24 @@ def _normalized_tags(raw):
 
 
 def _similar_images_for(image, user, limit=8):
-    current_tags = set(_normalized_tags(image.tags) + _normalized_tags(image.ai_tags))
+    tags = _normalized_tags(image.tags) + _normalized_tags(image.ai_tags)
 
-    base_queryset = ImageUpload.objects.filter(
+    if not tags:
+        return ImageUpload.objects.filter(
+            user=user,
+            trashed=False,
+            archived=False
+        ).exclude(id=image.id).order_by('-upload_date')[:limit]
+
+    query = Q()
+    for tag in set(tags):
+        query |= Q(tags__icontains=tag) | Q(ai_tags__icontains=tag)
+
+    return ImageUpload.objects.filter(
         user=user,
         trashed=False,
         archived=False
-    ).exclude(id=image.id)
-
-    if not current_tags:
-        return list(base_queryset.order_by("-upload_date")[:limit])
-
-    scored = []
-    for candidate in base_queryset:
-        candidate_tags = set(_normalized_tags(candidate.tags) + _normalized_tags(candidate.ai_tags))
-        score = len(current_tags & candidate_tags)
-
-        if score > 0:
-            scored.append((score, candidate))
-
-    scored.sort(
-        key=lambda x: (
-            -x[0],
-            -(x[1].upload_date.timestamp() if x[1].upload_date else 0)
-        )
-    )
-
-    return [item[1] for item in scored[:limit]]
+    ).filter(query).exclude(id=image.id).order_by('-upload_date')[:limit]
 
 
 @login_required
@@ -91,7 +69,6 @@ def image_detail(request, image_id):
     ).order_by("-created_date")
 
     similar_images = _similar_images_for(image, request.user, limit=8)
-
     tags_list = _split_tags(image.tags)
     ai_tags_list = _split_tags(image.ai_tags)
 
@@ -123,28 +100,45 @@ def download_image(request, image_id):
     )
 
 
-
-
 @login_required
 def gallery_home(request):
     images = ImageUpload.objects.filter(
-        user=request.user, 
-        trashed=False,
-        archived=False
-    ).order_by('-upload_date')
-    
-    images_by_month = {}
+       user=request.user,
+       trashed=False,
+       archived=False
+    ).only("id", "image", "upload_date", "title")
+
+    temp = defaultdict(list)
+
     for img in images:
-        month = img.upload_date.strftime("%B %Y")
-        if month not in images_by_month:
-            images_by_month[month] = []
-        images_by_month[month].append(img)
-    
-    highlights = images[:4]
+       month = img.upload_date.strftime("%Y-%m")  # key for sorting
+       temp[month].append(img)
+
+    sorted_months = sorted(temp.keys(), reverse=True)
+    images_by_month = OrderedDict()
+
+    for month in sorted_months:
+       readable = temp[month][0].upload_date.strftime("%B %Y")
+       images_by_month[readable] = temp[month]
+       highlights = images[:4]
+
     return render(request, 'gallery/home.html', {
-        'images_by_month': images_by_month,
+        'images_by_month': dict(images_by_month),
         'highlights': highlights,
     })
+
+
+def run_ai_processing(obj):
+    if not obj.image:
+        return
+    try:
+        labels = get_labels(obj.image.path)
+        clean_tags = process_tags(labels)
+        ImageUpload.objects.filter(id=obj.id).update(ai_tags=", ".join(clean_tags))
+    except Exception as e:
+        print(f"[AI ERROR] {e}")
+        obj.ai_tags = ""
+        obj.save()
 
 @login_required
 def upload_image(request):
@@ -166,21 +160,9 @@ def upload_image(request):
             if audio_note:
                 obj.audio_note = audio_note
             obj.save()
-
-            try:
-                vision_labels = analyze_image(obj.image.path)
-                obj.ai_tags = ', '.join(vision_labels)
-                print(f"[AI TAGS] For {obj.image.name}: {obj.ai_tags}")
-                obj.save()
-            except Exception as e:
-                print(f"[Vision ERROR] {e}")
-                obj.ai_tags = ""
-                obj.save()
-
-            
-
+            compress_image(obj.image.path)
+            Thread(target=run_ai_processing, args=(obj,)).start()
         return redirect('gallery_home')
-
     return render(request, 'gallery/upload.html')
 
 
@@ -327,7 +309,6 @@ def album_edit(request, album_id):
 
 @login_required
 @require_POST
-@csrf_exempt 
 def update_album_images(request, album_id):
     album = get_object_or_404(Album, id=album_id, user=request.user)
     try:
@@ -381,9 +362,6 @@ def remove_from_album(request, album_id, image_id):
 
 
 '''profile option and settings'''
-
-from .models import UserProfile
-from django.shortcuts import redirect
 
 @login_required
 def profile_view(request):
