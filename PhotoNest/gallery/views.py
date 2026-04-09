@@ -20,6 +20,7 @@ from threading import Thread
 from collections import defaultdict
 from .services.image_processing import compress_image
 from collections import OrderedDict
+from .services.search import smart_search_filter
 
 
 def _split_tags(raw):
@@ -259,12 +260,11 @@ def live_search_api(request):
     if query == '':
         return JsonResponse({'results': []})
     
-    images = ImageUpload.objects.filter(
+    base_images = ImageUpload.objects.filter(
         user=request.user,
         trashed=False
-    ).filter(
-        Q(title__icontains=query) | Q(tags__icontains=query) | Q(description__icontains=query) | Q(ai_tags__icontains=query)
-    ).order_by('-upload_date')[:20]
+    )
+    images = smart_search_filter(query, base_images)[:20]
 
     results = []
     for img in images:
