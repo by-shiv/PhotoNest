@@ -14,13 +14,14 @@ from .models import UserProfile
 from django import forms
 from django.contrib.auth import get_user_model
 from django.http import HttpResponseForbidden, FileResponse
-from .services.vision import get_labels
-from .services.tag_pipeline import process_tags
 from threading import Thread
 from collections import defaultdict
 from .services.image_processing import compress_image
 from collections import OrderedDict
 from .services.search import smart_search_filter
+from .services.blip_model import generate_caption
+from .services.clip_model import get_image_embedding
+from .services.tag_pipeline import generate_tags_from_caption, clean_caption
 
 
 def _split_tags(raw):
@@ -132,14 +133,25 @@ def gallery_home(request):
 def run_ai_processing(obj):
     if not obj.image:
         return
+
     try:
-        labels = get_labels(obj.image.path)
-        clean_tags = process_tags(labels)
-        ImageUpload.objects.filter(id=obj.id).update(ai_tags=", ".join(clean_tags))
+        raw_caption = generate_caption(obj.image.path)
+        caption = clean_caption(raw_caption)
+        
+        tags = generate_tags_from_caption(caption)
+        embedding = get_image_embedding(obj.image.path)
+
+        description = f"This moment captures {caption}"
+
+        ImageUpload.objects.filter(id=obj.id).update(
+            caption=caption,
+            ai_tags=", ".join(tags),
+            embedding=embedding.tolist(),
+            description=description
+        )
+
     except Exception as e:
         print(f"[AI ERROR] {e}")
-        obj.ai_tags = ""
-        obj.save()
 
 @login_required
 def upload_image(request):

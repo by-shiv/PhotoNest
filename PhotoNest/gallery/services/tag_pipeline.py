@@ -1,13 +1,18 @@
-STOPWORDS = {"image", "photo", "fun", "event", "object"}
+def clean_caption(caption):
+    words = caption.split()
 
-def process_tags(labels):
-    # confidence filter
-    tags = [name for name, score in labels if score > 0.75]
+    cleaned = []
+    for w in words:
+        if not cleaned or cleaned[-1] != w:
+            cleaned.append(w)
 
-    # remove stopwords
-    tags = [t for t in tags if t.lower() not in STOPWORDS]
+    return " ".join(cleaned)
 
-    # normalize
-    tags = list(set([t.lower().strip() for t in tags]))
+def generate_tags_from_caption(caption):
+    words = caption.lower().split()
 
-    return tags[:5]
+    STOPWORDS = {"a", "the", "in", "on", "at", "with", "and", "of", "is"}
+
+    tags = [w for w in words if w not in STOPWORDS]
+
+    return list(set(tags))[:6]

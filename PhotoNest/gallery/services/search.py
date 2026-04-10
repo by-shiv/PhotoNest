@@ -1,30 +1,38 @@
+from .clip_model import get_text_embedding, compute_similarity
+
 def smart_search_filter(query, images):
-    query_words = query.lower().split()
+    query_emb = get_text_embedding(query)
+
+    if hasattr(query_emb, "tolist"):
+        query_emb = query_emb.tolist()
 
     results = []
 
     for img in images:
-        text = " ".join([
-            img.title or "",
-            img.tags or "",
-            img.ai_tags or "",
-            img.description or ""
-        ]).lower()
+        if not img.embedding:
+            continue
 
-        score = 0
+        try:
+            img_emb = img.embedding
 
-        for word in query_words:
-            if word in text:
-              score += 2  # strong match
-            if img.ai_tags and word in img.ai_tags.lower():
-              score += 1
-            if not images:
-              images = base_images.order_by('-upload_date')[:10]
+            if isinstance(img_emb[0], list):
+                img_emb = img_emb[0]
 
-        if score > 0:
+            score = compute_similarity(img_emb, query_emb)
+
+        except Exception as e:
+            print(f"[ERROR] IMG {img.id}: {e}")
+            continue
+
+        text = (img.caption or "").lower()
+
+        print(f"[DEBUG] IMG {img.id} | score={score:.4f} | caption={text}")
+
+        if score > 0.05 or query.lower() in text:
             results.append((score, img))
 
-    # sort by relevance + latest
-    results.sort(key=lambda x: (-x[0], -x[1].upload_date.timestamp()))
+    results.sort(key=lambda x: -x[0])
+
+    print(f"[DEBUG] TOTAL MATCHES: {len(results)}")
 
     return [img for _, img in results]

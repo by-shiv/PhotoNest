@@ -17,6 +17,8 @@ class ImageUpload(models.Model):
     archived = models.BooleanField(default=False)
     trashed = models.BooleanField(default=False)
     ai_tags = models.TextField(blank=True, null=True)
+    caption = models.TextField(blank=True, null=True)
+    embedding = models.JSONField(blank=True, null=True)
     
     def __str__(self):
         return f"{self.title or 'Image'} - {self.user.username}"
