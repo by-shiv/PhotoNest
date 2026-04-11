@@ -18,7 +18,7 @@ from threading import Thread
 from collections import defaultdict
 from .services.image_processing import compress_image
 from collections import OrderedDict
-from .services.search import smart_search_filter
+from .services.search import smart_search_filter, get_similar_images
 from .services.blip_model import generate_caption
 from .services.clip_model import get_image_embedding
 from .services.tag_pipeline import generate_tags_from_caption, clean_caption
@@ -35,28 +35,6 @@ def _normalized_tags(raw):
         return []
     return [t.strip().lower() for t in raw.split(",") if t.strip()]
 
-
-def _similar_images_for(image, user, limit=8):
-    tags = _normalized_tags(image.tags) + _normalized_tags(image.ai_tags)
-
-    if not tags:
-        return ImageUpload.objects.filter(
-            user=user,
-            trashed=False,
-            archived=False
-        ).exclude(id=image.id).order_by('-upload_date')[:limit]
-
-    query = Q()
-    for tag in set(tags):
-        query |= Q(tags__icontains=tag) | Q(ai_tags__icontains=tag)
-
-    return ImageUpload.objects.filter(
-        user=user,
-        trashed=False,
-        archived=False
-    ).filter(query).exclude(id=image.id).order_by('-upload_date')[:limit]
-
-
 @login_required
 def image_detail(request, image_id):
     image = get_object_or_404(
@@ -70,7 +48,12 @@ def image_detail(request, image_id):
         images=image
     ).order_by("-created_date")
 
-    similar_images = _similar_images_for(image, request.user, limit=8)
+    all_images = ImageUpload.objects.filter(
+    user=request.user,
+    trashed=False
+    )
+
+    similar_images = get_similar_images(image, all_images, top_k=8)
     tags_list = _split_tags(image.tags)
     ai_tags_list = _split_tags(image.ai_tags)
 

@@ -1,7 +1,10 @@
 import torch
-from PIL import Image
-from transformers import CLIPProcessor, CLIPModel
 import torch.nn.functional as F
+from PIL import Image
+import pillow_avif
+
+from transformers.models.clip.modeling_clip import CLIPModel
+from transformers import CLIPProcessor
 
 model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
 processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
@@ -9,38 +12,34 @@ processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
 
 def get_image_embedding(image_path):
     image = Image.open(image_path).convert("RGB")
+
     inputs = processor(images=image, return_tensors="pt")
 
     with torch.no_grad():
-        image_features = model.get_image_features(**inputs)
+        features = model.get_image_features(
+            pixel_values=inputs["pixel_values"]  
+        )
 
-    return image_features[0].numpy()
+    return features[0].cpu().numpy().tolist()
 
 
 def get_text_embedding(text):
     inputs = processor(text=[text], return_tensors="pt", padding=True)
 
     with torch.no_grad():
-        text_features = model.get_text_features(**inputs)
+        features = model.get_text_features(
+            input_ids=inputs["input_ids"],
+            attention_mask=inputs["attention_mask"]
+        )
 
-    return text_features[0].numpy()
+    return features[0].cpu().numpy().tolist()
 
 
 def compute_similarity(img_emb, text_emb):
-    try:
-        img_tensor = torch.tensor(img_emb, dtype=torch.float32)
-        text_tensor = torch.tensor(text_emb, dtype=torch.float32)
+    img = torch.tensor(img_emb)
+    txt = torch.tensor(text_emb)
 
-        img_tensor = img_tensor.flatten()
-        text_tensor = text_tensor.flatten()
+    img = F.normalize(img, dim=0)
+    txt = F.normalize(txt, dim=0)
 
-        img_tensor = F.normalize(img_tensor, dim=0)
-        text_tensor = F.normalize(text_tensor, dim=0)
-
-        similarity = torch.dot(img_tensor, text_tensor).item()
-
-        return similarity
-
-    except Exception as e:
-        print(f"[SIM ERROR] {e}")
-        return 0.0
+    return torch.dot(img, txt).item()
