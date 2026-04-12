@@ -170,3 +170,14 @@ def get_similar_images(target_img, images, top_k=8):
     results.sort(reverse=True, key=lambda x: x[0])
 
     return [img for score, img in results[:top_k]]
+
+def get_related_images_for_generation(query, images, top_k=5):
+    """
+    Finds images relevant to a text query for prompt building
+    """
+    try:
+        results = smart_search_filter(query, images)
+        return results[:top_k]
+    except Exception as e:
+        print(f"[GENERATION SEARCH ERROR] {e}")
+        return []

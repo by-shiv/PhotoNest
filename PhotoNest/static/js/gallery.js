@@ -52,13 +52,13 @@ function shareImage() {
 }
 
 // Hide navbar on click outside or Escape
-document.addEventListener('click', function(e) {
+document.addEventListener('click', function (e) {
     const actionsBar = document.getElementById('actions-navbar');
     if (actionsBar && !actionsBar.contains(e.target) && !e.target.classList.contains('select-btn')) {
         hideImageMenu();
     }
 });
-document.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', function (e) {
     if (e.key === "Escape") hideImageMenu();
 });
 
@@ -89,26 +89,46 @@ searchInput.addEventListener('input', () => {
 
 function showSearchResults(results) {
     if (results.length === 0) {
-        resultsDiv.innerHTML = '<p style="padding: 12px;">No results found</p>';
+        resultsDiv.innerHTML = `
+        <div class="no-results">
+            <div class="no-results-icon">🔍</div>
+            <div class="no-results-text">No results found</div>
+            <div class="no-results-sub">Try a different search or generate one ✨</div>
+        </div>
+    `;
         resultsDiv.style.display = 'block';
         return;
     }
-    let html = '<ul style="list-style: none; padding: 12px;">';
+
+    let html = '<div class="search-dropdown">';
+
     results.forEach(item => {
+        let url = item.type === 'generated'
+            ? `/gallery/generated/${item.id}/`
+            : `/gallery/image/${item.id}/`;
+
         html += `
-            <li style="padding: 8px 6px; cursor: pointer; display: flex; align-items: center;">
-                <img src="${item.image_url}" alt="${item.title}" style="width:45px; height:30px; object-fit: cover; border-radius: 6px; margin-right: 8px;">
-                <span>${item.title || 'Untitled'}</span>
-            </li>`;
+        <div class="search-item" onclick="window.location.href='${url}'">
+            
+            <img src="${item.image_url}" class="search-thumb">
+            
+            <div class="search-text">
+                <div class="search-title">${item.title || 'Untitled'}</div>
+                <div class="search-type">${item.type === 'generated' ? 'AI Generated' : 'Your Photo'}</div>
+            </div>
+
+        </div>
+    `;
     });
-    html += '</ul>';
+
+    html += '</div>';
 
     resultsDiv.innerHTML = html;
     resultsDiv.style.display = 'block';
 }
 
 // Hide results if clicked outside
-document.addEventListener('click', function(event) {
+document.addEventListener('click', function (event) {
     if (!resultsDiv.contains(event.target) && event.target !== searchInput) {
         resultsDiv.style.display = 'none';
     }
@@ -171,15 +191,15 @@ function saveAlbumImages() {
         },
         body: JSON.stringify({ image_ids: Array.from(selectedImageIds) }),
     }).then(res => res.json())
-      .then(data => {
-          if (data.success) {
-              alert('Album updated!');
-              closeAlbumModal();
-              location.reload();
-          } else {
-              alert('Failed to update album.');
-          }
-      });
+        .then(data => {
+            if (data.success) {
+                alert('Album updated!');
+                closeAlbumModal();
+                location.reload();
+            } else {
+                alert('Failed to update album.');
+            }
+        });
 }
 
 
@@ -197,7 +217,7 @@ function closeCreateAlbumModal() {
 }
 
 // Handle form submission
-document.getElementById('create-album-form').onsubmit = function(e) {
+document.getElementById('create-album-form').onsubmit = function (e) {
     e.preventDefault();
     const name = document.getElementById('new-album-name').value;
     const desc = document.getElementById('new-album-desc').value;
@@ -205,18 +225,18 @@ document.getElementById('create-album-form').onsubmit = function(e) {
 
     fetch('/gallery/api/create_album_with_images/', {
         method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': getCookie('csrftoken')},
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': getCookie('csrftoken') },
         body: `name=${encodeURIComponent(name)}&description=${encodeURIComponent(desc)}&images[]=${imgIds}`
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            closeCreateAlbumModal();
-            window.location.href = '/gallery/albums/';  // reload albums page
-        } else {
-            alert(data.error || "Could not create album.");
-        }
-    });
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                closeCreateAlbumModal();
+                window.location.href = '/gallery/albums/';  // reload albums page
+            } else {
+                alert(data.error || "Could not create album.");
+            }
+        });
 };
 
 
@@ -224,14 +244,14 @@ document.getElementById('create-album-form').onsubmit = function(e) {
 // unarchive 
 
 function unarchiveImage(imageId) {
-  if(!confirm('Unarchive this image?')) return;
-  fetch(`/gallery/image/${imageId}/archive/`, {
-    method: 'POST',
-    headers: { 'X-CSRFToken': getCookie('csrftoken') },
-  }).then(() => {
-    alert('Image unarchived!');
-    location.reload();
-  });
+    if (!confirm('Unarchive this image?')) return;
+    fetch(`/gallery/image/${imageId}/archive/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') },
+    }).then(() => {
+        alert('Image unarchived!');
+        location.reload();
+    });
 }
 
 
@@ -241,32 +261,73 @@ function removeFromAlbum(albumId, imageId, btn) {
     if (!confirm("Remove this image from album?")) return;
     fetch(`/gallery/albums/${albumId}/remove_image/${imageId}/`, {
         method: 'POST',
-        headers: {'X-CSRFToken': getCookie('csrftoken')}
+        headers: { 'X-CSRFToken': getCookie('csrftoken') }
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            // Remove the card from DOM for instant feedback
-            btn.closest('.image-card').remove();
-        } else {
-            alert("Failed to remove image from album!");
-        }
-    });
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Remove the card from DOM for instant feedback
+                btn.closest('.image-card').remove();
+            } else {
+                alert("Failed to remove image from album!");
+            }
+        });
 }
 
 
 //dropdown
 
 document.querySelectorAll('.dropbtn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const dropdown = btn.nextElementSibling;
-    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-  });
-});
-window.addEventListener('click', function(event) {
-  if (!event.target.matches('.dropbtn')) {
-    document.querySelectorAll('.dropdown-content').forEach(dc => {
-      dc.style.display = 'none';
+    btn.addEventListener('click', () => {
+        const dropdown = btn.nextElementSibling;
+        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
     });
-  }
 });
+window.addEventListener('click', function (event) {
+    if (!event.target.matches('.dropbtn')) {
+        document.querySelectorAll('.dropdown-content').forEach(dc => {
+            dc.style.display = 'none';
+        });
+    }
+});
+
+function generateImage(query) {
+    const resultsDiv = document.getElementById('live-search-results');
+
+    resultsDiv.innerHTML = `
+        <p style="padding:12px;">Generating image... ⏳</p>
+    `;
+
+    fetch(`/gallery/generate-image/?q=${encodeURIComponent(query)}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.generated) {
+                window.location.href = data.redirect_url;
+            } else {
+                resultsDiv.innerHTML = `<p style="padding:12px;">Generation failed ❌</p>`;
+            }
+        })
+        .catch(() => {
+            resultsDiv.innerHTML = `<p style="padding:12px;">Error generating image</p>`;
+        });
+}
+
+function regenerateImage(query) {
+    window.location.href = `/gallery/generate-image/?q=${encodeURIComponent(query)}`;
+}
+
+function triggerSearch() {
+    const query = document.getElementById('live-search-input').value.trim();
+    if (!query) return;
+
+    fetch(`/gallery/api/search/?q=${encodeURIComponent(query)}`)
+        .then(res => res.json())
+        .then(data => showSearchResults(data.results));
+}
+
+function generateFromInput() {
+    const query = document.getElementById('live-search-input').value.trim();
+    if (!query) return;
+
+    generateImage(query);
+}

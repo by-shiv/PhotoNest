@@ -23,6 +23,25 @@ class ImageUpload(models.Model):
     def __str__(self):
         return f"{self.title or 'Image'} - {self.user.username}"
 
+
+
+class GeneratedImage(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='generated/')
+    title = models.CharField(max_length=255)
+    
+    prompt = models.TextField(blank=True, null=True)
+    generation_time = models.FloatField(blank=True, null=True)  # seconds
+    caption = models.TextField(blank=True, null=True)
+    tags = models.TextField(blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.title} - {self.user.username}"
+
+
+
 class Album(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)

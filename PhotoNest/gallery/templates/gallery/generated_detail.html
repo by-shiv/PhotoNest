@@ -1,0 +1,75 @@
+{% extends 'gallery/base.html' %}
+{% load static %}
+
+{% block title %}
+  {{ image.title }} | Generated Image
+{% endblock %}
+
+{% block content %}
+  <div class="detail-wrap">
+    <!-- TOP BAR -->
+    <div class="detail-top">
+      <a href="{% url 'generated_gallery' %}" class="back-link">← Back to generated</a>
+
+      <div class="detail-actions">
+        <a href="{{ image.image.url }}" download class="btn btn-secondary">Download</a>
+
+        <button class="btn btn-secondary" onclick="regenerateImage('{{ image.title }}')">🔁 Regenerate</button>
+      </div>
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class="detail-grid">
+      <!-- IMAGE -->
+      <section class="detail-media card">
+        <img src="{{ image.image.url }}" class="detail-image" />
+
+        <div class="ai-badge">AI Generated</div>
+      </section>
+
+      <!-- SIDEBAR -->
+      <aside class="detail-sidebar card">
+        <h1>{{ image.title }}</h1>
+        <p class="detail-meta">Generated on {{ image.created_at|date:'M d, Y' }}</p>
+
+        <!-- SEARCH QUERY -->
+        <div class="detail-block">
+          <h2>🔍 Search Query</h2>
+          <p>"{{ image.title }}"</p>
+        </div>
+
+        <!-- GENERATION TIME -->
+        <div class="detail-block">
+          <h2>⏱ Generation Time</h2>
+          <p>{{ image.generation_time }} seconds</p>
+        </div>
+
+        <!-- PROMPT -->
+        <div class="detail-block">
+          <h2>🧠 Prompt Used</h2>
+          <div class="prompt-box">{{ image.prompt }}</div>
+        </div>
+
+        <!-- CAPTION -->
+        {% if image.caption %}
+          <div class="detail-block">
+            <h2>📝 Caption</h2>
+            <p>{{ image.caption }}</p>
+          </div>
+        {% endif %}
+
+        <!-- TAGS -->
+        {% if image.tags %}
+          <div class="detail-block">
+            <h2>🏷 Tags</h2>
+            <div class="tag-list">
+              {% for tag in tags_list %}
+                <span class="tag tag-ai">{{ tag }}</span>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+      </aside>
+    </div>
+  </div>
+{% endblock %}

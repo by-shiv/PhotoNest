@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import ImageUpload, Album
+from .models import ImageUpload, Album, GeneratedImage
 from .forms import ImageUploadForm, AlbumForm
 from django.utils import timezone
 from datetime import timedelta
@@ -22,6 +22,14 @@ from .services.search import smart_search_filter, get_similar_images
 from .services.blip_model import generate_caption
 from .services.clip_model import get_image_embedding
 from .services.tag_pipeline import generate_tags_from_caption, clean_caption
+import random, os, time
+from collections import Counter
+from .services.generation import generate_image_from_prompt, build_advanced_prompt
+from .services.search import get_related_images_for_generation
+from django.conf import settings
+from django.core.files.base import ContentFile
+from .models import GeneratedImage
+
 
 
 def _split_tags(raw):
@@ -91,26 +99,50 @@ def gallery_home(request):
        user=request.user,
        trashed=False,
        archived=False
-    ).only("id", "image", "upload_date", "title")
+    ).only("id", "image", "upload_date", "title").order_by('-upload_date')
 
     temp = defaultdict(list)
 
     for img in images:
-       month = img.upload_date.strftime("%Y-%m")  # key for sorting
-       temp[month].append(img)
+        month = img.upload_date.strftime("%Y-%m")
+        temp[month].append(img)
 
     sorted_months = sorted(temp.keys(), reverse=True)
     images_by_month = OrderedDict()
 
     for month in sorted_months:
-       readable = temp[month][0].upload_date.strftime("%B %Y")
-       images_by_month[readable] = temp[month]
-       highlights = images[:4]
+        readable = temp[month][0].upload_date.strftime("%B %Y")
+        images_by_month[readable] = temp[month]
+
+    highlights = get_highlights(images)
 
     return render(request, 'gallery/home.html', {
         'images_by_month': dict(images_by_month),
         'highlights': highlights,
     })
+
+
+def get_highlights(images):
+    tag_counter = Counter()
+
+    for img in images:
+        tags = (img.ai_tags or "").lower().split(", ")
+        tag_counter.update(tags)
+
+    scored = []
+
+    for img in images:
+        tags = (img.ai_tags or "").lower().split(", ")
+        score = sum(1 / (tag_counter[t] + 1) for t in tags)
+        scored.append((score, img))
+
+    scored.sort(reverse=True, key=lambda x: x[0])
+
+    top_candidates = [img for score, img in scored[:10]]
+
+    highlights = random.sample(top_candidates, min(6, len(top_candidates)))
+
+    return highlights
 
 
 def run_ai_processing(obj):
@@ -135,6 +167,45 @@ def run_ai_processing(obj):
 
     except Exception as e:
         print(f"[AI ERROR] {e}")
+
+
+@login_required
+def generate_image_api(request):
+    query = request.GET.get("q", "")
+
+    base_images = ImageUpload.objects.filter(
+        user=request.user,
+        trashed=False
+    )
+
+    related_images = get_related_images_for_generation(query, base_images)
+
+    prompt = build_advanced_prompt(query, related_images)
+
+    start_time = time.time()
+    image_bytes = generate_image_from_prompt(prompt)
+    end_time = time.time()
+    generation_time = round(end_time - start_time, 2)
+
+    file_name = f"{query.replace(' ', '_')}.png"
+
+    generated_obj = GeneratedImage.objects.create(
+        user=request.user,
+        title=query,
+        prompt=prompt,
+        generation_time=generation_time,
+        caption=f"AI generated image for '{query}'",
+        tags=", ".join([img.ai_tags for img in related_images if img.ai_tags][:3])
+    )
+
+    generated_obj.image.save(file_name, ContentFile(image_bytes))
+    generated_obj.save()
+
+    return JsonResponse({
+        "generated": True,
+        "redirect_url": "/gallery/generated/"
+    })
+
 
 @login_required
 def upload_image(request):
@@ -162,6 +233,23 @@ def upload_image(request):
     return render(request, 'gallery/upload.html')
 
 
+@login_required
+def generated_gallery(request):
+    images = GeneratedImage.objects.filter(user=request.user).order_by('-created_at')
+    return render(request, 'gallery/generated.html', {'images': images})
+
+@login_required
+def generated_detail(request, image_id):
+    image = get_object_or_404(GeneratedImage, id=image_id, user=request.user)
+
+    tags_list = []
+    if image.tags:
+        tags_list = [tag.strip() for tag in image.tags.split(",")]
+
+    return render(request, 'gallery/generated_detail.html', {
+        'image': image,
+        'tags_list': tags_list
+    })
 
 @login_required
 def favorites(request):
@@ -255,22 +343,35 @@ def live_search_api(request):
     if query == '':
         return JsonResponse({'results': []})
     
-    base_images = ImageUpload.objects.filter(
-        user=request.user,
-        trashed=False
+    uploaded_images = ImageUpload.objects.filter(
+       user=request.user,
+       trashed=False
     )
-    images = smart_search_filter(query, base_images)[:20]
+
+    generated_images = GeneratedImage.objects.filter(
+       user=request.user
+    )
+
+    ai_results = smart_search_filter(query, uploaded_images)
+    generated_results = generated_images.filter(
+       title__icontains=query
+    )
+
+    images = list(ai_results) + list(generated_results)
+    images = images[:20]
 
     results = []
-    for img in images:
-        results.append({
-            'id': img.id,
-            'title': img.title,
-            'image_url': img.image.url,
-            'favorite': img.favorite,
-            'uploaded_on': img.upload_date.strftime('%Y-%m-%d'),
-        })
 
+    for img in images:
+        is_generated = hasattr(img, 'prompt')
+
+        results.append({
+           'id': img.id,
+           'title': img.title,
+           'image_url': img.image.url,
+           'favorite': getattr(img, 'favorite', False),
+           'type': 'generated' if is_generated else 'uploaded'
+        })
     return JsonResponse({'results': results})
 
 

@@ -29,7 +29,7 @@
           <a href="{% url 'archives' %}">Archives</a>
         </li>
         <li>
-          <a href="#">Generated Images</a>
+          <a href="{% url 'generated_gallery' %}">Generated Images</a>
         </li>
         <li>
           <a href="{% url 'recently_added' %}">Recently Added</a>
@@ -47,10 +47,23 @@
     </div>
     <div class="main">
       <div class="navbar">
-        <input type="text" id="live-search-input" placeholder="Search your image" autocomplete="off" style="flex-grow: 1; padding: 7px 12px; border-radius: 7px; border: 1px solid #b9eecb;" />
-        <div id="live-search-results" class="live-search-results"></div>
+        <!-- 🔥 SEARCH WRAPPER -->
+        <div class="search-wrapper">
+          <div class="search-bar">
+            <input type="text" id="live-search-input" placeholder="Search or generate image..." autocomplete="off" />
+
+            <button onclick="triggerSearch()" class="search-btn">🔍</button>
+            <button onclick="generateFromInput()" class="generate-btn">✨</button>
+          </div>
+
+          <!-- 🔥 DROPDOWN -->
+          <div id="live-search-results" class="live-search-results"></div>
+        </div>
+
+        <!-- UPLOAD -->
         <a href="{% url 'upload_image' %}" class="upload-btn">+</a>
 
+        <!-- SETTINGS -->
         <div class="dropdown settings-dropdown">
           <button class="dropbtn settings-btn">⚙</button>
           <div class="dropdown-content">
@@ -60,7 +73,8 @@
             <a href="#">Help and support</a>
           </div>
         </div>
-        
+
+        <!-- PROFILE -->
         <div class="dropdown profile-dropdown">
           <button class="dropbtn profile-btn">👤</button>
           <div class="dropdown-content">
@@ -70,9 +84,7 @@
             <a href="#">Switch account</a>
             <a href="{% url 'account_logout' %}">Logout</a>
           </div>
-          
         </div>
-
       </div>
       <div id="actions-navbar" class="actions-bar" style="display:none;">
         <button onclick="deleteImage()" title="Delete" aria-label="Delete">&#128465;</button>

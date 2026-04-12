@@ -338,24 +338,139 @@ h3 {
 }
 
 
-.live-search-results {
-    position: absolute;
-    top: 46px;
-    /* Adjust based on your navbar height */
-    left: 0;
-    right: 0;
-    max-height: 280px;
-    overflow-y: auto;
-    background: #fff;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
-    border-radius: 8px;
-    z-index: 400;
-    display: none;
-    font-size: 0.95em;
+.search-dropdown {
+  animation: fadeIn 0.2s ease;
 }
 
-.live-search-results ul li:hover {
-    background-color: #daf5e7;
+/* SEARCH WRAPPER */
+.search-wrapper {
+  position: relative;
+  flex-grow: 1;
+}
+
+/* SEARCH BAR */
+.search-bar {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.search-bar input {
+  flex-grow: 1;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #b9eecb;
+  outline: none;
+}
+
+/* DROPDOWN POSITION FIX */
+.live-search-results {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+}
+
+/* Dropdown container */
+.search-dropdown {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  max-height: 350px;
+  overflow-y: auto;
+  background: #1e1e1e;
+  margin-top: 0;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  padding: 6px;
+  z-index: 1000;
+}
+
+/* Each item */
+.search-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+/* Hover effect */
+.search-item:hover {
+  background: #2a2a2a;
+}
+
+/* Image */
+.search-thumb {
+  width: 50px;
+  height: 35px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+/* Text container */
+.search-text {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Title */
+.search-title {
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* SCROLLBAR STYLING */
+.search-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.search-dropdown::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.search-dropdown::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 10px;
+}
+
+.search-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+/* Type (AI / Uploaded) */
+.search-type {
+  font-size: 11px;
+  color: #aaa;
+}
+
+.no-results {
+  text-align: center;
+  padding: 25px 10px;
+  color: #bbb;
+  background: #1e1e1e;
+  border-radius: 10px;
+}
+
+.no-results-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.no-results-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: #ddd;
+}
+
+.no-results-sub {
+  font-size: 12px;
+  color: #888;
+  margin-top: 4px;
 }
 
 .album-form {
@@ -933,3 +1048,112 @@ h3 {
   position: relative;
   z-index: 2;
 }
+
+/* AI Badge */
+.ai-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: #4CAF50;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* Prompt Box */
+.prompt-box {
+  background: #111;
+  color: #ddd;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  border: 1px solid #333;
+  margin-top: 5px;
+  word-wrap: break-word;
+}
+
+/* Detail Layout Improvements */
+.detail-wrap {
+  padding: 20px;
+}
+
+.detail-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.detail-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.detail-grid {
+  display: flex;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.detail-media {
+  flex: 1;
+  position: relative;
+}
+
+.detail-image {
+  width: 100%;
+  border-radius: 10px;
+}
+
+.detail-sidebar {
+  flex: 1;
+}
+
+.detail-block {
+  margin-top: 15px;
+}
+
+.detail-block h2 {
+  font-size: 16px;
+  margin-bottom: 5px;
+}
+
+/* Tags */
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag {
+  padding: 5px 10px;
+  border-radius: 20px;
+  background: #333;
+  font-size: 12px;
+}
+
+.tag-ai {
+  background: #4CAF50;
+  color: white;
+}
+
+/* Buttons */
+.btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  background: #444;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #666;
+}
+
