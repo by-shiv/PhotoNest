@@ -4,15 +4,22 @@
 {% endblock %}
 {% block content %}
   <h2>Your Albums</h2>
+  <button onclick="openCreateAlbumModal()" class="btn btn-primary">+ Create Album</button>
   <div class="album-list">
     {% for album in albums %}
-      <div class="album-card" style="cursor:pointer;" onclick="window.location='{% url 'album_detail' album.id %}'">
-        <h3>{{ album.name }}</h3>
-        <p>{{ album.description }}</p>
-        <span>{{ album.images.count }} images</span>
+      <div class="album-card" onclick="window.location='{% url 'album_detail' album.id %}'">
+        <div class="album-cover" style="background-image:url('{% if album.images.first %}{{ album.images.first.image.url }}{% endif %}')"></div>
+
+        <div class="album-card-body">
+          <h3>{{ album.name }}</h3>
+
+          <p class="album-desc">{{ album.description|default:'No description' }}</p>
+
+          <span class="album-count">{{ album.images.count }} images</span>
+        </div>
       </div>
     {% empty %}
-      <p>No albums yet!</p>
+      <p class="empty-note">No albums yet!</p>
     {% endfor %}
   </div>
 {% endblock %}

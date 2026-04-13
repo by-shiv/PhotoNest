@@ -28,8 +28,7 @@ from .services.generation import generate_image_from_prompt, build_advanced_prom
 from .services.search import get_related_images_for_generation
 from django.conf import settings
 from django.core.files.base import ContentFile
-from .models import GeneratedImage
-
+from .models import GeneratedImage, ImageUpload
 
 
 def _split_tags(raw):
@@ -73,6 +72,22 @@ def image_detail(request, image_id):
         "ai_tags_list": ai_tags_list,
     })
 
+
+def update_image(request, image_id):
+    if request.method == "POST":
+        data = json.loads(request.body)
+
+        image = ImageUpload.objects.get(id=image_id)
+
+        image.title = data.get("title", image.title)
+        image.description = data.get("description", image.description)
+        image.tags = data.get("tags", image.tags)
+
+        image.save()
+
+        return JsonResponse({"success": True})
+
+    return JsonResponse({"success": False})
 
 @login_required
 def download_image(request, image_id):

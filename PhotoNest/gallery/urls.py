@@ -5,7 +5,7 @@ from .views import (
     toggle_favorite, toggle_archive, move_to_trash,
     restore_from_trash, delete_permanently, live_search_api, album_create, album_edit, update_album_images,
     user_images_api, create_album_with_images, remove_from_album, profile_view, profile_edit,
-    image_detail, download_image, generate_image_api, generated_gallery, generated_detail
+    image_detail, download_image, generate_image_api, generated_gallery, generated_detail, update_image
 )
 from django.contrib.auth import views as auth_views
 
@@ -38,4 +38,5 @@ urlpatterns = [
     path('generate-image/', generate_image_api, name='generate_image_api'),
     path('generated/', generated_gallery, name='generated_gallery'),
     path('generated/<int:image_id>/', generated_detail, name='generated_detail'),
+    path("update/<int:image_id>/", update_image, name="update_image"),
 ]

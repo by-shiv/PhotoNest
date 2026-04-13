@@ -28,11 +28,44 @@ function hideImageMenu() {
 }
 
 // handle Delete click (make actual requests using fetch/AJAX for real app)
-function deleteImage() {
+function moveToTrash() {
     if (selectedImageId) {
-        window.location.href = '/gallery/image/' + selectedImageId + '/delete/';
+        window.location.href = '/gallery/image/' + selectedImageId + '/trash/';
     }
 }
+
+function openUploadModal() {
+    const modal = document.getElementById('upload-modal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeUploadModal() {
+    const modal = document.getElementById('upload-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+function restoreImage(imageId) {
+    if (!confirm("Restore this image?")) return;
+
+    fetch(`/gallery/image/${imageId}/restore/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') }
+    }).then(() => {
+        location.reload();
+    });
+}
+
+function deleteImagePermanently(imageId) {
+    if (!confirm("Delete permanently? This cannot be undone.")) return;
+
+    fetch(`/gallery/image/${imageId}/delete/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') }
+    }).then(() => {
+        location.reload();
+    });
+}
+
 function addToAlbum() {
     if (selectedImageId) {
         document.getElementById('create-album-modal').style.display = 'flex';
@@ -68,39 +101,121 @@ document.addEventListener('keydown', function (e) {
 
 const searchInput = document.getElementById('live-search-input');
 const resultsDiv = document.getElementById('live-search-results');
-let debounceTimer;
 
-searchInput.addEventListener('input', () => {
-    clearTimeout(debounceTimer);
-    const query = searchInput.value.trim();
-    if (query.length < 2) {
-        resultsDiv.innerHTML = '';  // Clear results if query too short
-        resultsDiv.style.display = 'none';
-        return;
-    }
-    debounceTimer = setTimeout(() => {
-        fetch(`/gallery/api/search/?q=${encodeURIComponent(query)}`)
-            .then(response => response.json())
-            .then(data => {
-                showSearchResults(data.results);
-            });
-    }, 250); // wait 250ms after user stops typing
+if (searchInput && resultsDiv) {
+
+    let debounceTimer;
+
+    searchInput.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        const query = searchInput.value.trim();
+
+        if (query.length < 2) {
+            resultsDiv.innerHTML = '';
+            resultsDiv.style.display = 'none';
+            return;
+        }
+
+        debounceTimer = setTimeout(() => {
+            fetch(`/gallery/api/search/?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    showSearchResults(data.results);
+                });
+        }, 250);
+    });
+
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('id_images');
+
+    if (!dropZone || !fileInput) return;
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+
+        fileInput.files = e.dataTransfer.files;
+        dropZone.querySelector('span').textContent =
+            `${fileInput.files.length} file(s) selected`;
+    });
+
+    fileInput.addEventListener('change', () => {
+        dropZone.querySelector('span').textContent =
+            `${fileInput.files.length} file(s) selected`;
+    });
+
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const uploadForm = document.getElementById('upload-form');
+
+    if (!uploadForm) return;
+
+    uploadForm.addEventListener('submit', function (e) {
+        e.preventDefault();  // 🔥 stop normal submit
+
+        const formData = new FormData(uploadForm);
+
+        fetch('/gallery/upload/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: formData
+        })
+        .then(res => {
+            if (res.redirected) {
+                // reload page to show new images
+                window.location.href = res.url;
+            } else {
+                location.reload();
+            }
+        })
+        .catch(() => {
+            alert("Upload failed");
+        });
+    });
+
 });
 
 function showSearchResults(results) {
+    if (!searchInput || !resultsDiv) return;
+    if (searchInput.value.trim() === "") {
+        resultsDiv.innerHTML = "";
+        resultsDiv.style.display = "none";
+        return;
+    }
+
+    // 🔥 No results case
     if (results.length === 0) {
         resultsDiv.innerHTML = `
-        <div class="no-results">
-            <div class="no-results-icon">🔍</div>
-            <div class="no-results-text">No results found</div>
-            <div class="no-results-sub">Try a different search or generate one ✨</div>
-        </div>
-    `;
+            <div class="no-results">
+                <strong>🔍 No results found</strong>
+                <span>Try a different search or generate one ✨</span>
+            </div>
+        `;
         resultsDiv.style.display = 'block';
         return;
     }
 
-    let html = '<div class="search-dropdown">';
+    // 🔥 Results exist
+    let html = '';
 
     results.forEach(item => {
         let url = item.type === 'generated'
@@ -108,33 +223,145 @@ function showSearchResults(results) {
             : `/gallery/image/${item.id}/`;
 
         html += `
-        <div class="search-item" onclick="window.location.href='${url}'">
-            
-            <img src="${item.image_url}" class="search-thumb">
-            
-            <div class="search-text">
-                <div class="search-title">${item.title || 'Untitled'}</div>
-                <div class="search-type">${item.type === 'generated' ? 'AI Generated' : 'Your Photo'}</div>
+            <div class="live-search-item" onclick="window.location.href='${url}'">
+                
+                <img src="${item.image_url}" alt="img">
+                
+                <div class="search-text">
+                    <div class="search-title">${item.title || 'Untitled'}</div>
+                    <div class="search-type">
+                        ${item.type === 'generated' ? 'AI Generated' : 'Your Photo'}
+                    </div>
+                </div>
+
             </div>
-
-        </div>
-    `;
+        `;
     });
-
-    html += '</div>';
 
     resultsDiv.innerHTML = html;
     resultsDiv.style.display = 'block';
 }
 
-// Hide results if clicked outside
+
+// 🔥 Hide results if clicked outside
 document.addEventListener('click', function (event) {
-    if (!resultsDiv.contains(event.target) && event.target !== searchInput) {
+    if (resultsDiv && searchInput &&
+        !resultsDiv.contains(event.target) &&
+        !searchInput.contains(event.target)) {
+        resultsDiv.innerHTML = "";
         resultsDiv.style.display = 'none';
     }
 });
 
 
+
+const settingsBtn = document.querySelector('.settings-btn');
+const profileBtn = document.querySelector('.profile-btn');
+
+const settingsMenu = document.querySelector('.settings-dropdown .dropdown-content');
+const profileMenu = document.querySelector('.profile-dropdown .dropdown-content');
+
+if (settingsBtn && profileBtn && settingsMenu && profileMenu) {
+
+    settingsBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        profileMenu.classList.remove('show');
+        settingsMenu.classList.toggle('show');
+    });
+
+    profileBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        settingsMenu.classList.remove('show');
+        profileMenu.classList.toggle('show');
+    });
+
+    document.addEventListener('click', function () {
+        settingsMenu.classList.remove('show');
+        profileMenu.classList.remove('show');
+    });
+}
+
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const sidebar = document.querySelector(".detail-sidebar");
+    const editBtn = document.querySelector(".edit-toggle");
+    const cancelBtn = document.querySelector(".cancel-btn");
+    const saveBtn = document.querySelector(".save-btn");
+
+    if (editBtn) {
+        editBtn.addEventListener("click", () => {
+            sidebar.classList.add("editing");
+        });
+    }
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener("click", () => {
+            sidebar.classList.remove("editing");
+        });
+    }
+
+    if (saveBtn) {
+        saveBtn.addEventListener("click", () => {
+
+            const url = sidebar.dataset.url;
+
+            const title = document.querySelector(".edit-title").value;
+            const description = document.querySelector(".edit-description").value;
+            const tags = document.querySelector(".edit-tags").value;
+
+            fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCSRFToken()
+                },
+                body: JSON.stringify({
+                    title: title,
+                    description: description,
+                    tags: tags
+                })
+            })
+                .then(res => res.json())
+                .then(data => {
+
+                    if (data.success) {
+
+                        document.querySelector(".editable-field h1").innerText = title;
+
+                        const descView = document.querySelector(".detail-block .view-mode");
+                        descView.innerText = description || "No description added";
+
+                        const tagContainer = document.querySelector(".user-tags");
+                        tagContainer.innerHTML = "";
+
+                        if (tags.trim() === "") {
+                            tagContainer.innerHTML = "<span class='tag'>No tags</span>";
+                        } else {
+                            tags.split(",").forEach(tag => {
+                                const span = document.createElement("span");
+                                span.className = "tag";
+                                span.innerText = tag.trim();
+                                tagContainer.appendChild(span);
+                            });
+                        }
+
+                        sidebar.classList.remove("editing");
+                    }
+
+                });
+        });
+    }
+
+});
+
+/* CSRF */
+function getCSRFToken() {
+    return document.cookie
+        .split("; ")
+        .find(row => row.startsWith("csrftoken"))
+        ?.split("=")[1];
+}
 
 
 // album creation modal
@@ -147,6 +374,8 @@ function openAlbumModal(albumId) {
 
     const modal = document.getElementById('album-modal');
     const imageListDiv = document.getElementById('album-image-list');
+    if (!modal || !imageListDiv) return;
+    console.log("GRID:", imageListDiv);
 
     imageListDiv.innerHTML = '<p>Loading images...</p>';
     modal.style.display = 'flex';
@@ -164,6 +393,10 @@ function openAlbumModal(albumId) {
                 imageListDiv.appendChild(div);
             });
         });
+}
+
+function openCreateAlbumModal() {
+    document.getElementById('create-album-modal').style.display = 'flex';
 }
 
 function toggleSelectImage(id, element) {
@@ -202,43 +435,40 @@ function saveAlbumImages() {
         });
 }
 
-
-
-function addToAlbum() {
-    if (selectedImageId) {
-        // Open the create album modal, passing the image ID
-        document.getElementById('create-album-modal').style.display = 'flex';
-        document.getElementById('create-album-image-ids').value = selectedImageId;
-    }
-}
-
 function closeCreateAlbumModal() {
     document.getElementById('create-album-modal').style.display = 'none';
 }
 
 // Handle form submission
-document.getElementById('create-album-form').onsubmit = function (e) {
-    e.preventDefault();
-    const name = document.getElementById('new-album-name').value;
-    const desc = document.getElementById('new-album-desc').value;
-    const imgIds = document.getElementById('create-album-image-ids').value;
+const createAlbumForm = document.getElementById('create-album-form');
 
-    fetch('/gallery/api/create_album_with_images/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': getCookie('csrftoken') },
-        body: `name=${encodeURIComponent(name)}&description=${encodeURIComponent(desc)}&images[]=${imgIds}`
-    })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                closeCreateAlbumModal();
-                window.location.href = '/gallery/albums/';  // reload albums page
-            } else {
-                alert(data.error || "Could not create album.");
-            }
-        });
-};
+if (createAlbumForm) {
+    createAlbumForm.onsubmit = function (e) {
+        e.preventDefault();
 
+        const name = document.getElementById('new-album-name').value;
+        const desc = document.getElementById('new-album-desc').value;
+        const imgIds = document.getElementById('create-album-image-ids').value;
+
+        fetch('/gallery/api/create_album_with_images/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: `name=${encodeURIComponent(name)}&description=${encodeURIComponent(desc)}&images[]=${imgIds}`
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    closeCreateAlbumModal();
+                    window.location.href = '/gallery/albums/';
+                } else {
+                    alert(data.error || "Could not create album.");
+                }
+            });
+    };
+}
 
 
 // unarchive 
@@ -331,3 +561,10 @@ function generateFromInput() {
 
     generateImage(query);
 }
+
+document.querySelector('input[type="file"]').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        document.getElementById('profile-preview').src = URL.createObjectURL(file);
+    }
+});

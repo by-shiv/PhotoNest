@@ -1,14 +1,17 @@
-{% extends "gallery/base.html" %}
+{% extends 'gallery/base.html' %}
 {% load static %}
 
-{% block title %}{{ image.title|default:"Image" }} | PhotoNest{% endblock %}
+{% block title %}
+  {{ image.title|default:'Image' }} | PhotoNest
+{% endblock %}
 
 {% block content %}
 <div class="detail-wrap">
+
   <div class="detail-top">
     <a href="{% url 'gallery_home' %}" class="back-link">← Back to gallery</a>
 
-    <div class="detail-actions">
+    <div class="detail-actions action-group">
       <a href="{% url 'download_image' image.id %}" class="btn btn-secondary">Download</a>
 
       <form action="{% url 'toggle_favorite' image.id %}" method="post">
@@ -33,65 +36,101 @@
   </div>
 
   <div class="detail-grid">
+
+    <!-- IMAGE -->
     <section class="detail-media card">
-      <img src="{{ image.image.url }}" alt="{{ image.title|default:'Gallery image' }}" class="detail-image">
+      <img src="{{ image.image.url }}" class="detail-image">
 
       {% if image.audio_note %}
-        <div class="audio-box">
-          <audio controls>
-            <source src="{{ image.audio_note.url }}">
-            Your browser does not support audio playback.
-          </audio>
-        </div>
+      <div class="audio-box">
+        <audio controls>
+          <source src="{{ image.audio_note.url }}">
+        </audio>
+      </div>
       {% endif %}
     </section>
 
-    <aside class="detail-sidebar card">
-      <h1>{{ image.title|default:"Untitled image" }}</h1>
-      <p class="detail-meta">Uploaded {{ image.upload_date|date:"M d, Y" }}</p>
+    <!-- SIDEBAR -->
+    <aside class="detail-sidebar card"
+           data-image-id="{{ image.id }}"
+           data-url="{% url 'update_image' image.id %}">
 
-      {% if image.description %}
-        <div class="detail-block">
-          <h2>Description</h2>
-          <p>{{ image.description }}</p>
-        </div>
-      {% endif %}
+      <!-- TITLE -->
+      <div class="editable-field">
+        <h1 class="view-mode">{{ image.title|default:"Untitled image" }}</h1>
+        <input type="text" class="edit-mode input edit-title" value="{{ image.title }}">
+      </div>
 
-      {% if tags_list %}
-        <div class="detail-block">
-          <h2>Tags</h2>
-          <div class="tag-list">
+      <p class="detail-meta">Uploaded {{ image.upload_date|date:'M d, Y' }}</p>
+
+      <!-- ACTIONS -->
+      <div class="edit-actions">
+        <button class="btn btn-secondary edit-toggle view-mode">Edit</button>
+        <button class="btn btn-secondary save-btn edit-mode">Save</button>
+        <button class="btn btn-danger cancel-btn edit-mode">Cancel</button>
+      </div>
+
+      <!-- DESCRIPTION (ALWAYS VISIBLE) -->
+      <div class="detail-block editable-field">
+        <h2>Description</h2>
+
+        <p class="view-mode">
+          {{ image.description|default:"No description added" }}
+        </p>
+
+        <textarea class="edit-mode textarea edit-description">{{ image.description }}</textarea>
+      </div>
+
+      <!-- USER TAGS (EDITABLE) -->
+      <div class="detail-block editable-field">
+        <h2>Your Tags</h2>
+
+        <div class="tag-list view-mode user-tags">
+          {% if image.tags %}
             {% for tag in tags_list %}
               <span class="tag">{{ tag }}</span>
             {% endfor %}
-          </div>
+          {% else %}
+            <span class="tag">No tags</span>
+          {% endif %}
         </div>
-      {% endif %}
 
-      {% if ai_tags_list %}
-        <div class="detail-block">
-          <h2>AI Tags</h2>
-          <div class="tag-list">
+        <input type="text"
+               class="edit-mode input edit-tags"
+               value="{{ image.tags }}">
+      </div>
+
+      <!-- AI TAGS (READ ONLY) -->
+      <div class="detail-block">
+        <h2>AI Tags</h2>
+
+        <div class="tag-list">
+          {% if ai_tags_list %}
             {% for tag in ai_tags_list %}
               <span class="tag tag-ai">{{ tag }}</span>
             {% endfor %}
-          </div>
+          {% else %}
+            <span class="tag tag-ai">No AI tags</span>
+          {% endif %}
         </div>
+      </div>
+
+      <!-- ALBUMS -->
+      {% if album_list %}
+      <div class="detail-block">
+        <h2>Albums</h2>
+        <ul class="album-links">
+          {% for album in album_list %}
+            <li><a href="{% url 'album_detail' album.id %}">{{ album.name }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
       {% endif %}
 
-      {% if album_list %}
-        <div class="detail-block">
-          <h2>Albums</h2>
-          <ul class="album-links">
-            {% for album in album_list %}
-              <li><a href="{% url 'album_detail' album.id %}">{{ album.name }}</a></li>
-            {% endfor %}
-          </ul>
-        </div>
-      {% endif %}
     </aside>
   </div>
 
+  <!-- SIMILAR -->
   <section class="similar-section">
     <div class="section-head">
       <h2>Similar images</h2>
@@ -101,10 +140,10 @@
     <div class="image-grid">
       {% for item in similar_images %}
         <a href="{% url 'image_detail' item.id %}" class="image-card">
-          <img src="{{ item.image.url }}" alt="{{ item.title|default:'Similar image' }}">
+          <img src="{{ item.image.url }}">
           <div class="image-card-body">
             <h3>{{ item.title|default:"Untitled image" }}</h3>
-            <p>{{ item.upload_date|date:"M d, Y" }}</p>
+            <p>{{ item.upload_date|date:'M d, Y' }}</p>
           </div>
         </a>
       {% empty %}
@@ -112,5 +151,6 @@
       {% endfor %}
     </div>
   </section>
+
 </div>
 {% endblock %}

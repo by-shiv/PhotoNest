@@ -10,8 +10,5 @@ class AlbumForm(forms.ModelForm):
     class Meta:
         model = Album
         fields = ['name', 'description']
-        widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Album Name'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Album Description'}),
-        }
+        widgets = {'name': forms.TextInput(attrs={'placeholder': 'Album Name'}),'description': forms.Textarea(attrs={'rows': 3,'placeholder': 'Album Description'}),}
 

@@ -10,31 +10,44 @@
     </title>
     <link rel="stylesheet" href="{% static 'css/gallery.css' %}" />
   </head>
-  <body>
+  <body class="app-layout">
     <div class="sidebar">
       <div class="logo">
         PHOTO <span>NEST</span>
       </div>
       <ul>
-        <li>
+        <!-- ALL PHOTOS -->
+        <li class="{% if request.resolver_match.url_name == 'gallery_home' or request.resolver_match.url_name == 'image_detail' %}active{% endif %}">
           <a href="{% url 'gallery_home' %}">All Photos</a>
         </li>
-        <li>
+
+        <!-- FAVORITES -->
+        <li class="{% if request.resolver_match.url_name == 'favorites' %}active{% endif %}">
           <a href="{% url 'favorites' %}">Favorites</a>
         </li>
-        <li>
+
+        <!-- ALBUMS (WITH CHILD PAGES) -->
+        <li class="{% if request.resolver_match.url_name == 'albums_list' or request.resolver_match.url_name == 'album_detail' or request.resolver_match.url_name == 'album_edit' or request.resolver_match.url_name == 'album_create' %}active{% endif %}">
           <a href="{% url 'albums_list' %}">Albums</a>
         </li>
-        <li>
+
+        <!-- ARCHIVES -->
+        <li class="{% if request.resolver_match.url_name == 'archives' %}active{% endif %}">
           <a href="{% url 'archives' %}">Archives</a>
         </li>
-        <li>
+
+        <!-- GENERATED -->
+        <li class="{% if request.resolver_match.url_name == 'generated_gallery' or request.resolver_match.url_name == 'generated_detail' %}active{% endif %}">
           <a href="{% url 'generated_gallery' %}">Generated Images</a>
         </li>
-        <li>
+
+        <!-- RECENT -->
+        <li class="{% if request.resolver_match.url_name == 'recently_added' %}active{% endif %}">
           <a href="{% url 'recently_added' %}">Recently Added</a>
         </li>
-        <li>
+
+        <!-- TRASH -->
+        <li class="{% if request.resolver_match.url_name == 'trash' %}active{% endif %}">
           <a href="{% url 'trash' %}">Trash</a>
         </li>
       </ul>
@@ -47,7 +60,7 @@
     </div>
     <div class="main">
       <div class="navbar">
-        <!-- 🔥 SEARCH WRAPPER -->
+        <!-- SEARCH WRAPPER -->
         <div class="search-wrapper">
           <div class="search-bar">
             <input type="text" id="live-search-input" placeholder="Search or generate image..." autocomplete="off" />
@@ -56,51 +69,85 @@
             <button onclick="generateFromInput()" class="generate-btn">✨</button>
           </div>
 
-          <!-- 🔥 DROPDOWN -->
+          <!-- DROPDOWN -->
           <div id="live-search-results" class="live-search-results"></div>
         </div>
 
-        <!-- UPLOAD -->
-        <a href="{% url 'upload_image' %}" class="upload-btn">+</a>
+        <div class="nav-actions">
+          <!-- UPLOAD -->
+          <button onclick="openUploadModal()" class="dropbtn upload-btn">+</button>
 
-        <!-- SETTINGS -->
-        <div class="dropdown settings-dropdown">
-          <button class="dropbtn settings-btn">⚙</button>
-          <div class="dropdown-content">
-            <a href="#">Privacy</a>
-            <a href="#">Storage setting</a>
-            <a href="#">Backup and sync</a>
-            <a href="#">Help and support</a>
+          <!-- SETTINGS -->
+          <div class="dropdown settings-dropdown">
+            <button class="dropbtn settings-btn">⚙</button>
+            <div class="dropdown-content">
+              <a href="#">Privacy</a>
+              <a href="#">Storage setting</a>
+              <a href="#">Backup and sync</a>
+              <a href="#">Help and support</a>
+            </div>
           </div>
-        </div>
 
-        <!-- PROFILE -->
-        <div class="dropdown profile-dropdown">
-          <button class="dropbtn profile-btn">👤</button>
-          <div class="dropdown-content">
-            <a href="{% url 'profile' %}">My profile</a>
-            <a href="#">Activity</a>
-            <a href="#">Profile setting</a>
-            <a href="#">Switch account</a>
-            <a href="{% url 'account_logout' %}">Logout</a>
+          <!-- PROFILE -->
+          <div class="dropdown profile-dropdown">
+            <button class="dropbtn profile-btn">👤</button>
+            <div class="dropdown-content">
+              <a href="{% url 'profile' %}">My profile</a>
+              <a href="#">Activity</a>
+              <a href="#">Switch account</a>
+              <a href="{% url 'account_logout' %}">Logout</a>
+            </div>
           </div>
         </div>
       </div>
       <div id="actions-navbar" class="actions-bar" style="display:none;">
-        <button onclick="deleteImage()" title="Delete" aria-label="Delete">&#128465;</button>
+        <button onclick="moveToTrash()" title="Delete" aria-label="Delete">&#128465;</button>
         <button onclick="addToAlbum()" title="Add to Album" aria-label="Add to Album">&#127916;</button>
         <button onclick="archiveImage()" title="Archive" aria-label="Archive">&#128230;</button>
         <button onclick="shareImage()" title="Share" aria-label="Share">&#128257;</button>
       </div>
 
+      <!-- UPLOAD MODAL -->
+      <div id="upload-modal" class="modal">
+        <div class="modal-content upload-modal-content">
+          <span class="close" onclick="closeUploadModal()">&times;</span>
+
+          <h2>Upload Images</h2>
+
+          <form method="post" enctype="multipart/form-data" id="upload-form" data-ajax="true">
+            {% csrf_token %}
+
+            <div id="drop-zone" class="upload-drop-zone">
+              <span>Drag & drop files here or click to select</span>
+              <input type="file" name="images" id="id_images" multiple hidden accept="image/*,image/heic" />
+            </div>
+            <div class="form-group">
+              <input type="text" name="title" placeholder="Title (applied to all images)" />
+            </div>
+            <div class="form-group">
+              <input type="text" name="tags" placeholder="Tags (comma separated)" />
+            </div>
+            <div class="form-group">
+              <textarea name="description" placeholder="Description"></textarea>
+            </div>
+            <div class="form-group">
+              <input type="file" name="audio_note" accept="audio/*" />
+            </div>
+            <button type="submit" class="btn btn-primary">Upload</button>
+          </form>
+        </div>
+      </div>
+
       <div id="album-modal" class="modal" style="display:none;">
         <div class="modal-content">
           <span class="close" onclick="closeAlbumModal()">&times;</span>
-          <h3>Select images to add to album</h3>
-          <div id="album-image-list" class="album-image-list">
-            <!-- Images will dynamically populate here -->
+          <div class="modal-header">
+            <h3>Select images to add to album</h3>
           </div>
-          <button onclick="saveAlbumImages()">Save</button>
+          <div id="album-image-list" class="album-image-grid"></div>
+          <div class="modal-footer">
+            <button onclick="saveAlbumImages()" class="btn btn-primary">Save</button>
+          </div>
         </div>
       </div>
 
@@ -112,15 +159,17 @@
             <input type="text" name="name" id="new-album-name" placeholder="Album name" required /><br /><br />
             <textarea name="description" id="new-album-desc" placeholder="Description"></textarea><br /><br />
             <input type="hidden" name="images" id="create-album-image-ids" />
-            <button type="submit">Create</button>
+            <button type="submit" class="btn btn-primary">Create Album</button>
           </form>
         </div>
       </div>
 
-      <div class="content">
-        {% block content %}
+      <div class="main-container">
+        <div class="content">
+          {% block content %}
 
-        {% endblock %}
+          {% endblock %}
+        </div>
       </div>
     </div>
     <script src="{% static 'js/gallery.js' %}"></script>

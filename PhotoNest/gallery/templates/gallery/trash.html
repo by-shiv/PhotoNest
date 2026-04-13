@@ -1,13 +1,34 @@
 {% extends 'gallery/base.html' %}
-{% block title %}Thrash | PhotoNest{% endblock %}
+
+{% block title %}
+  Trash | PhotoNest
+{% endblock %}
+
 {% block content %}
+  <div class="page-header">
     <h2>Recently Deleted</h2>
-    <div class="image-grid">
-        {% for img in images %}
-            {% if img.image %}
-                <div class="image-card" style="background-image:url('{{ img.image.url }}');"></div>
-            {% endif %}
-        {% empty %}<p>Thrash is empty</p>
-        {% endfor %}
-    </div>
+    <p class="page-subtitle">Images will remain here until permanently deleted</p>
+  </div>
+
+  <div class="image-grid">
+    {% for img in images %}
+      {% if img.image %}
+        <div class="image-card" style="background-image:url('{{ img.image.url }}');">
+          <a href="{% url 'image_detail' img.id %}" class="image-link-overlay"></a>
+
+          <div class="card-actions">
+            <!-- ♻ RESTORE -->
+            <button class="action-btn restore-btn" title="Restore" onclick="restoreImage({{ img.id }}); event.stopPropagation();">↩</button>
+
+            <!-- ❌ DELETE PERMANENT -->
+            <button class="action-btn delete-btn" title="Delete permanently" onclick="deleteImagePermanently({{ img.id }}); event.stopPropagation();">✖</button>
+          </div>
+        </div>
+      {% endif %}
+    {% empty %}
+      <div class="empty-state">
+        <p>Trash is empty</p>
+      </div>
+    {% endfor %}
+  </div>
 {% endblock %}

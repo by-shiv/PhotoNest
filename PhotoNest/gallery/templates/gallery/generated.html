@@ -5,20 +5,25 @@
 {% endblock %}
 
 {% block content %}
-  <h2>Generated Images</h2>
+  <div class="page-header">
+    <h2>Generated Images</h2>
+    <p class="page-subtitle">AI-generated images based on your searches</p>
+  </div>
 
   <div class="image-grid">
     {% for img in images %}
-      <a href="{% url 'generated_detail' img.id %}">
-        <div class="image-card" style="background-image:url('{{ img.image.url }}'); position:relative;">
-          <div class="image-overlay"></div>
-          <div style="position:absolute; bottom:0; left:0; right:0; background: rgba(0,0,0,0.6); color:white; padding:6px; font-size:14px;">
-            {{ img.title }}
-          </div>
+      <a href="{% url 'generated_detail' img.id %}" class="image-card-link">
+        <div class="image-card gen-card" style="background-image:url('{{ img.image.url }}');">
+          <span class="ai-badge">AI</span>
+          <div class="gen-overlay"></div>
+
+          <div class="gen-title">{{ img.title|default:'Untitled' }}</div>
         </div>
       </a>
     {% empty %}
-      <p>No generated images yet.</p>
+      <div class="empty-state">
+        <p>No generated images yet</p>
+      </div>
     {% endfor %}
   </div>
 {% endblock %}

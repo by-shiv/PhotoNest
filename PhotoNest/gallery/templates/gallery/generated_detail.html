@@ -22,9 +22,11 @@
     <div class="detail-grid">
       <!-- IMAGE -->
       <section class="detail-media card">
-        <img src="{{ image.image.url }}" class="detail-image" />
+        <div class="detail-image-wrap">
+          <img src="{{ image.image.url }}" class="detail-image" />
 
-        <div class="ai-badge">AI Generated</div>
+          <span class="ai-badge">AI</span>
+        </div>
       </section>
 
       <!-- SIDEBAR -->
@@ -47,7 +49,9 @@
         <!-- PROMPT -->
         <div class="detail-block">
           <h2>🧠 Prompt Used</h2>
-          <div class="prompt-box">{{ image.prompt }}</div>
+          <div class="prompt-box">
+            <pre>{{ image.prompt }}</pre>
+          </div>
         </div>
 
         <!-- CAPTION -->

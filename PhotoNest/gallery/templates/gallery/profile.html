@@ -1,37 +1,63 @@
 {% extends 'gallery/base.html' %}
+
 {% block content %}
-<div class="profile-page">
-    <div class="profile-pic-container">
+  <div class="profile-wrap">
+    <!-- HEADER -->
+    <div class="profile-header card">
+      <div class="profile-pic-container">
         {% if profile.profile_pic %}
-            <img src="{{ profile.profile_pic.url }}" alt="Profile Picture" class="profile-pic"/>
+          <img src="{{ profile.profile_pic.url }}" class="profile-pic" />
         {% else %}
-            <div class="profile-pic-placeholder">No photo</div>
+          <div class="profile-pic-placeholder">👤</div>
         {% endif %}
-    </div>
-    <h2>{{ request.user.get_full_name }}</h2>
-    <p>{{ request.user.email }}</p>
+      </div>
 
-    <h3>Favorites</h3>
-    <div class="favorites-list">
+      <div class="profile-info">
+        <h2>{{ request.user.get_full_name|default:request.user.username }}</h2>
+        <p class="profile-email">{{ request.user.email }}</p>
+
+        <div class="profile-actions">
+          <a href="{% url 'profile_edit' %}" class="btn btn-primary">Edit Profile</a>
+          <a href="{% url 'account_logout' %}" class="btn btn-secondary">Log Out</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAVORITES -->
+    <div class="profile-section">
+      <div class="section-head">
+        <h3>Favorites</h3>
+      </div>
+
+      <div class="profile-grid">
         {% for img in favorites %}
-            <a href="{% url 'gallery_home' %}#img-{{ img.id }}" class="fav-thumb" style="background-image: url('{{ img.image.url }}')"></a>
+          <a href="{% url 'image_detail' img.id %}" class="profile-thumb" style="background-image:url('{{ img.image.url }}');"></a>
         {% empty %}
-            <p>No favorites yet.</p>
+          <p class="empty-note">No favorites yet</p>
         {% endfor %}
+      </div>
     </div>
 
-    <h3>Albums</h3>
-    <div class="albums-list">
+    <!-- ALBUMS -->
+    <div class="profile-section">
+      <div class="section-head">
+        <h3>Albums</h3>
+      </div>
+
+      <div class="album-list">
         {% for album in albums %}
-        <a href="{% url 'album_detail' album.id %}" class="album-thumb">{{ album.name }} <span>({{ album.images.count }})</span></a>
-        {% empty %}
-            <p>No albums yet.</p>
-        {% endfor %}
-    </div>
+          <a href="{% url 'album_detail' album.id %}" class="album-card">
+            <div class="album-cover" style="background-image:url('{% if album.images.first %}{{ album.images.first.image.url }}{% endif %}')"></div>
 
-    <div class="profile-actions">
-        <a href="{% url 'profile_edit' %}" class="btn btn-primary">Edit Profile</a>
-        <a href="{% url 'account_logout' %}" class="btn btn-secondary">Log Out</a>
+            <div class="album-card-body">
+              <h4>{{ album.name }}</h4>
+              <span>{{ album.images.count }} images</span>
+            </div>
+          </a>
+        {% empty %}
+          <p class="empty-note">No albums yet</p>
+        {% endfor %}
+      </div>
     </div>
-</div>
+  </div>
 {% endblock %}
