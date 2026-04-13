@@ -347,7 +347,7 @@ body.app-layout,
 .main {
   margin-left: 260px;
   width: calc(100% - 260px);
-  padding-top: 80px; /* space for navbar */
+  padding-top: 80px;
   padding-left: 20px;
   padding-right: 20px;
   overflow: hidden;
@@ -356,8 +356,9 @@ body.app-layout,
 .content {
   height: calc(100vh - 80px);
   overflow-y: auto;
-  padding-right: 5px;
+  padding-bottom: 60px;
   box-sizing: border-box;
+  padding-right: 5px;
   scrollbar-width: none;
 }
 
@@ -371,6 +372,7 @@ body.app-layout,
   gap: 13px;
   width: 100%;
   align-items: start;
+  padding-bottom: 40px;
 }
 
 .main-container {
