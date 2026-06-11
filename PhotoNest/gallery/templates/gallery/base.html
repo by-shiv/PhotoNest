@@ -18,37 +18,37 @@
       <ul>
         <!-- ALL PHOTOS -->
         <li class="{% if request.resolver_match.url_name == 'gallery_home' or request.resolver_match.url_name == 'image_detail' %}active{% endif %}">
-          <a href="{% url 'gallery_home' %}">All Photos</a>
+          <a href="{% url 'gallery_home' %}">🖼️ All Photos</a>
         </li>
 
         <!-- FAVORITES -->
         <li class="{% if request.resolver_match.url_name == 'favorites' %}active{% endif %}">
-          <a href="{% url 'favorites' %}">Favorites</a>
+          <a href="{% url 'favorites' %}">⭐ Favorites</a>
         </li>
 
         <!-- ALBUMS (WITH CHILD PAGES) -->
         <li class="{% if request.resolver_match.url_name == 'albums_list' or request.resolver_match.url_name == 'album_detail' or request.resolver_match.url_name == 'album_edit' or request.resolver_match.url_name == 'album_create' %}active{% endif %}">
-          <a href="{% url 'albums_list' %}">Albums</a>
+          <a href="{% url 'albums_list' %}">📁 Albums</a>
         </li>
 
         <!-- ARCHIVES -->
         <li class="{% if request.resolver_match.url_name == 'archives' %}active{% endif %}">
-          <a href="{% url 'archives' %}">Archives</a>
+          <a href="{% url 'archives' %}">🗄️ Archives</a>
         </li>
 
         <!-- GENERATED -->
         <li class="{% if request.resolver_match.url_name == 'generated_gallery' or request.resolver_match.url_name == 'generated_detail' %}active{% endif %}">
-          <a href="{% url 'generated_gallery' %}">Generated Images</a>
+          <a href="{% url 'generated_gallery' %}">✨ Generated Images</a>
         </li>
 
         <!-- RECENT -->
         <li class="{% if request.resolver_match.url_name == 'recently_added' %}active{% endif %}">
-          <a href="{% url 'recently_added' %}">Recently Added</a>
+          <a href="{% url 'recently_added' %}">🕒 Recently Added</a>
         </li>
 
         <!-- TRASH -->
         <li class="{% if request.resolver_match.url_name == 'trash' %}active{% endif %}">
-          <a href="{% url 'trash' %}">Trash</a>
+          <a href="{% url 'trash' %}">🗑️ Trash</a>
         </li>
       </ul>
       <div class="storage">

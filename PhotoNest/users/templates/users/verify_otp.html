@@ -1,0 +1,77 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Verify OTP</title>
+
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}" />
+  </head>
+  <body>
+    <div class="auth-page">
+      <div class="auth-card">
+        {% if messages %}
+          {% for message in messages %}
+            <div class="message {{ message.tags }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+        <h2>Email Verification</h2>
+
+        {% if error %}
+          <p style="color:red;">{{ error }}</p>
+        {% endif %}
+
+        {% if success %}
+          <p style="color:green;">{{ success }}</p>
+        {% endif %}
+
+        <form method="POST">
+          {% csrf_token %}
+
+          <input type="text" name="otp" placeholder="Enter OTP" maxlength="6" required />
+
+          <button type="submit">Verify OTP</button>
+        </form>
+
+        <div class="auth-link">
+          <a id="resend-link" href="{% url 'resend_otp' user.id %}">Resend OTP</a>
+
+          <p id="timer" style="margin-top:8px; font-size:14px;"></p>
+        </div>
+      </div>
+    </div>
+    <script>
+let seconds = {{ remaining_seconds }};
+
+const timer = document.getElementById("timer");
+const resendLink = document.getElementById("resend-link");
+
+function updateTimer() {
+
+    if (seconds > 0) {
+
+        resendLink.style.pointerEvents = "none";
+        resendLink.style.opacity = "0.5";
+
+        timer.innerText =
+            `Resend OTP in ${seconds}s`;
+
+        seconds--;
+
+    } else {
+
+        resendLink.style.pointerEvents = "auto";
+        resendLink.style.opacity = "1";
+
+        timer.innerText = "";
+    }
+}
+
+updateTimer();
+
+setInterval(
+    updateTimer,
+    1000
+);
+</script>
+  </body>
+</html>

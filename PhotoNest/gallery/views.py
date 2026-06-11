@@ -167,8 +167,9 @@ def run_ai_processing(obj):
     try:
         raw_caption = generate_caption(obj.image.path)
         caption = clean_caption(raw_caption)
-        
+
         tags = generate_tags_from_caption(caption)
+
         embedding = get_image_embedding(obj.image.path)
 
         description = f"This moment captures {caption}"
@@ -176,8 +177,8 @@ def run_ai_processing(obj):
         ImageUpload.objects.filter(id=obj.id).update(
             caption=caption,
             ai_tags=", ".join(tags),
-            embedding=embedding.tolist(),
-            description=description
+            embedding=embedding,
+            description=f"This moment captures {caption}"
         )
 
     except Exception as e:

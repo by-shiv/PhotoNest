@@ -10,41 +10,137 @@
   <body>
     <div class="auth-container">
       <div class="left-panel">
-        <h1>PhotoNest</h1>
-        <p>Sign up to share your photos and discover creatives.</p>
-        <ul>
-          <li>Quick sign up</li>
-          <li>Showcase your art</li>
-          <li>Join the community</li>
-        </ul>
+        <div class="hero-content">
+          <h1>PhotoNest</h1>
+
+          <p class="hero-tagline">AI-Powered Smart Gallery</p>
+
+          <p class="hero-description">Search photos using natural language, generate memories, and rediscover your gallery instantly.</p>
+
+          <div class="feature-tags">
+            <span>🔍 Semantic Search</span>
+            <span>🏷️ Auto Tagging</span>
+            <span>📝 AI Captions</span>
+            <span>🎨 AI Generation</span>
+          </div>
+          <div class="preview-card">🌅 Sunset Collection</div>
+
+          <div class="preview-card">🎓 College Memories</div>
+
+          <div class="preview-card">💍 Wedding Album</div>
+        </div>
       </div>
       <div class="right-panel">
+        {% if messages %}
+          {% for message in messages %}
+            <div class="message {{ message.tags }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
         <div class="tab-buttons">
           <button id="login-tab" class="active">Login</button>
           <button id="register-tab">Register</button>
         </div>
         <div class="social-login">
-    <a href="{% provider_login_url 'google' %}" class="google-btn">
-        <img src="{% static 'img/google_logo.svg' %}" alt="G" style="height:20px;vertical-align:middle;margin-right:8px;">
-        Sign in with Google
-    </a>
-</div>
+          <a href="{% provider_login_url 'google' %}" class="google-btn">
+            <img src="{% static 'img/Google-logo.png' %}" alt="Google" class="google-icon" />
+            Continue with Google
+          </a>
+        </div>
+
+        <div class="or-divider">
+          <span>OR</span>
+        </div>
         <div class="forms-wrapper">
           <!-- Login Form -->
           <form id="login-form" class="form active" method="post">
             {% csrf_token %}
-            {{ login_form.as_p }}
+
+            <div class="form-group">{{ login_form.username }}</div>
+
+            <div class="form-group password-wrapper">
+              {{ login_form.password }}
+              <span class="toggle-password">👁</span>
+            </div>
+            <div style="
+        display:flex;
+        justify-content:space-between;
+        margin-bottom:15px;
+    ">
+              <a href="{% url 'verify_account' %}">Verify Account?</a>
+
+              <a href="{% url 'forgot_password' %}">Forgot Password?</a>
+            </div>
+
             <button type="submit" name="login_submit">Sign In</button>
           </form>
           <!-- Register Form -->
           <form id="register-form" class="form" method="post">
             {% csrf_token %}
-            {{ register_form.as_p }}
-            <button type="submit" name="register_submit">Create Account</button>
+
+            {% if register_form.non_field_errors %}
+              <div class="field-error">{{ register_form.non_field_errors.0 }}</div>
+            {% endif %}
+
+            <div class="form-group">
+              {{ register_form.username }}
+
+              {% if register_form.username.errors %}
+                <div class="field-error">{{ register_form.username.errors.0 }}</div>
+              {% endif %}
+            </div>
+
+            <div class="form-group">
+              {{ register_form.email }}
+
+              {% if register_form.email.errors %}
+                <div class="field-error">{{ register_form.email.errors.0 }}</div>
+              {% endif %}
+            </div>
+
+            <div class="form-group password-wrapper">
+              {{ register_form.password1 }}
+              <span class="toggle-password">👁</span>
+            </div>
+
+            {% if register_form.password1.errors %}
+              <div class="field-error">{{ register_form.password1.errors.0 }}</div>
+            {% endif %}
+
+            <div id="password-strength"></div>
+
+            <div class="form-group password-wrapper">
+              {{ register_form.password2 }}
+              <span class="toggle-password">👁</span>
+            </div>
+
+            {% if register_form.password2.errors %}
+              <div class="field-error">{{ register_form.password2.errors.0 }}</div>
+            {% endif %}
+
+            <div id="password-match"></div>
+
+            <button type="submit" name="register_submit" id="register-btn" disabled>Create Account</button>
           </form>
         </div>
       </div>
     </div>
+    {% if register_form.errors %}
+      <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          const loginTab = document.getElementById('login-tab')
+          const registerTab = document.getElementById('register-tab')
+        
+          const loginForm = document.getElementById('login-form')
+          const registerForm = document.getElementById('register-form')
+        
+          loginTab.classList.remove('active')
+          registerTab.classList.add('active')
+        
+          loginForm.classList.remove('active')
+          registerForm.classList.add('active')
+        })
+      </script>
+    {% endif %}
     <script src="{% static 'js/auth.js' %}"></script>
   </body>
 </html>
