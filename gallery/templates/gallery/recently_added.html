@@ -14,7 +14,7 @@
     {% for img in images %}
       {% if img.image %}
         <a href="{% url 'image_detail' img.id %}" class="image-card-link">
-          <div class="image-card" style="background-image:url('{{ img.image.url }}');">
+          <div class="image-card" style="background-image:url('{{ img.supabase_url|default:img.image.url }}');">
             <span class="image-date">{{ img.upload_date|date:'M d' }}</span>
           </div>
         </a>

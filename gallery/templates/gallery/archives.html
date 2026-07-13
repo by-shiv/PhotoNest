@@ -13,7 +13,7 @@
   <div class="image-grid">
     {% for img in images %}
       {% if img.image %}
-        <div class="image-card" style="background-image:url('{{ img.image.url }}');">
+        <div class="image-card" style="background-image:url('{{ img.supabase_url|default:img.image.url }}');">
           <a href="{% url 'image_detail' img.id %}" class="image-link-overlay"></a>
 
           <div class="card-actions">

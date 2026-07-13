@@ -7,11 +7,13 @@ from django.dispatch import receiver
 
 class ImageUpload(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='gallery/')
+    image = models.ImageField(upload_to='gallery/',blank=True,null=True)
+    supabase_url = models.URLField(blank=True,null=True)
     title = models.CharField(max_length=255, blank=True)
     tags = models.CharField(max_length=255, blank=True)
     description = models.TextField(blank=True)
-    audio_note = models.FileField(upload_to='audio/', blank=True, null=True)
+    audio_note = models.FileField(upload_to='audio/',blank=True,null=True)
+    audio_supabase_url = models.URLField(blank=True,null=True)
     upload_date = models.DateTimeField(auto_now_add=True)
     favorite = models.BooleanField(default=False)
     archived = models.BooleanField(default=False)
@@ -19,19 +21,29 @@ class ImageUpload(models.Model):
     ai_tags = models.TextField(blank=True, null=True)
     caption = models.TextField(blank=True, null=True)
     embedding = models.JSONField(blank=True, null=True)
-    
+
     def __str__(self):
         return f"{self.title or 'Image'} - {self.user.username}"
 
 
-
 class GeneratedImage(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='generated/')
+
+    image = models.ImageField(
+        upload_to='generated/',
+        blank=True,
+        null=True
+    )
+
+    generated_supabase_url = models.URLField(
+        blank=True,
+        null=True
+    )
+
     title = models.CharField(max_length=255)
-    
+
     prompt = models.TextField(blank=True, null=True)
-    generation_time = models.FloatField(blank=True, null=True)  # seconds
+    generation_time = models.FloatField(blank=True, null=True)
     caption = models.TextField(blank=True, null=True)
     tags = models.TextField(blank=True, null=True)
 
@@ -39,7 +51,6 @@ class GeneratedImage(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.user.username}"
-
 
 
 class Album(models.Model):
@@ -54,12 +65,25 @@ class Album(models.Model):
 
 
 class UserProfile(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    profile_pic = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE
+    )
+
+    profile_pic = models.ImageField(
+        upload_to='profile_pics/',
+        blank=True,
+        null=True
+    )
+
+    profile_pic_url = models.URLField(
+        blank=True,
+        null=True
+    )
 
     def __str__(self):
         return f"{self.user.username}'s profile"
-
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
@@ -72,4 +96,3 @@ def create_user_profile(sender, instance, created, **kwargs):
 def save_user_profile(sender, instance, **kwargs):
     if hasattr(instance, 'userprofile'):
         instance.userprofile.save()
-

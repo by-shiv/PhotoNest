@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from urllib.parse import urlparse
 from .models import ImageUpload, Album, GeneratedImage
 from .forms import ImageUploadForm, AlbumForm
 from django.utils import timezone
@@ -21,6 +22,7 @@ from collections import OrderedDict
 from .services.search import smart_search_filter, get_similar_images
 from .services.blip_model import generate_caption
 from .services.clip_model import get_image_embedding
+from .services.supabase_storage import (upload_gallery_image, get_public_url, delete_gallery_image,upload_generated_image, get_generated_public_url, delete_generated_image, upload_profile_picture, get_profile_picture_url, delete_profile_picture,upload_audio,get_audio_public_url,delete_audio,)
 from .services.tag_pipeline import generate_tags_from_caption, clean_caption
 import random, os, time
 from collections import Counter
@@ -72,12 +74,12 @@ def image_detail(request, image_id):
         "ai_tags_list": ai_tags_list,
     })
 
-
+@login_required
 def update_image(request, image_id):
     if request.method == "POST":
         data = json.loads(request.body)
 
-        image = ImageUpload.objects.get(id=image_id)
+        image = get_object_or_404(ImageUpload, id=image_id, user=request.user)
 
         image.title = data.get("title", image.title)
         image.description = data.get("description", image.description)
@@ -91,16 +93,23 @@ def update_image(request, image_id):
 
 @login_required
 def download_image(request, image_id):
+
     image = get_object_or_404(
         ImageUpload,
         id=image_id,
         user=request.user
     )
 
+    if image.supabase_url:
+        return redirect(image.supabase_url)
+
     if not image.image:
-        return HttpResponseForbidden("No image file found.")
+        return HttpResponseForbidden(
+            "No image file found."
+        )
 
     filename = image.image.name.split("/")[-1]
+
     return FileResponse(
         image.image.open("rb"),
         as_attachment=True,
@@ -114,7 +123,7 @@ def gallery_home(request):
        user=request.user,
        trashed=False,
        archived=False
-    ).only("id", "image", "upload_date", "title").order_by('-upload_date')
+    ).only("id", "image", "supabase_url", "upload_date", "title").order_by('-upload_date')
 
     temp = defaultdict(list)
 
@@ -160,94 +169,271 @@ def get_highlights(images):
     return highlights
 
 
-def run_ai_processing(obj):
-    if not obj.image:
-        return
+def run_ai_processing(obj, image_bytes):
 
     try:
-        raw_caption = generate_caption(obj.image.path)
-        caption = clean_caption(raw_caption)
 
-        tags = generate_tags_from_caption(caption)
+        raw_caption = generate_caption(
+            image_bytes
+        )
 
-        embedding = get_image_embedding(obj.image.path)
+        caption = clean_caption(
+            raw_caption
+        )
 
-        description = f"This moment captures {caption}"
+        tags = generate_tags_from_caption(
+            caption
+        )
 
-        ImageUpload.objects.filter(id=obj.id).update(
+        embedding = get_image_embedding(
+            image_bytes
+        )
+
+        ImageUpload.objects.filter(
+            id=obj.id
+        ).update(
             caption=caption,
             ai_tags=", ".join(tags),
             embedding=embedding,
-            description=f"This moment captures {caption}"
+            description=f"This moment captures {caption}",
         )
 
-    except Exception as e:
-        print(f"[AI ERROR] {e}")
+        print(
+            f"[AI] Processed image {obj.id}"
+        )
 
+    except Exception:
+
+        import traceback
+        traceback.print_exc()
+        
 
 @login_required
 def generate_image_api(request):
-    query = request.GET.get("q", "")
 
-    base_images = ImageUpload.objects.filter(
-        user=request.user,
-        trashed=False
-    )
+    try:
 
-    related_images = get_related_images_for_generation(query, base_images)
+        query = request.GET.get(
+            "q",
+            ""
+        ).strip()
 
-    prompt = build_advanced_prompt(query, related_images)
+        base_images = ImageUpload.objects.filter(
+            user=request.user,
+            trashed=False
+        )
 
-    start_time = time.time()
-    image_bytes = generate_image_from_prompt(prompt)
-    end_time = time.time()
-    generation_time = round(end_time - start_time, 2)
+        related_images = get_related_images_for_generation(
+            query,
+            base_images
+        )
 
-    file_name = f"{query.replace(' ', '_')}.png"
+        prompt = build_advanced_prompt(
+            query,
+            related_images
+        )
 
-    generated_obj = GeneratedImage.objects.create(
-        user=request.user,
-        title=query,
-        prompt=prompt,
-        generation_time=generation_time,
-        caption=f"AI generated image for '{query}'",
-        tags=", ".join([img.ai_tags for img in related_images if img.ai_tags][:3])
-    )
+        start_time = time.time()
 
-    generated_obj.image.save(file_name, ContentFile(image_bytes))
-    generated_obj.save()
+        image_bytes = generate_image_from_prompt(
+            prompt
+        )
 
-    return JsonResponse({
-        "generated": True,
-        "redirect_url": "/gallery/generated/"
-    })
+        end_time = time.time()
+
+        generation_time = round(
+            end_time - start_time,
+            2
+        )
+
+        generated_obj = GeneratedImage.objects.create(
+            user=request.user,
+            title=query,
+            prompt=prompt,
+            generation_time=generation_time,
+            caption=f"AI generated image for '{query}'",
+            tags=", ".join(
+                [
+                    img.ai_tags
+                    for img in related_images
+                    if img.ai_tags
+                ][:3]
+            )
+        )
+
+        filename = (
+            f"{request.user.id}/"
+            f"{generated_obj.id}.png"
+        )
+
+        upload_generated_image(
+            image_bytes,
+            filename
+        )
+
+        generated_obj.generated_supabase_url = (
+            get_generated_public_url(filename)
+        )
+
+        generated_obj.save(
+            update_fields=[
+                "generated_supabase_url"
+            ]
+        )
+
+        print(
+            f"[GENERATED] Uploaded: {filename}"
+        )
+
+        return JsonResponse({
+            "generated": True,
+            "redirect_url": "/gallery/generated/"
+        })
+
+    except Exception as e:
+
+        print(f"[GENERATION ERROR] {e}")
+
+        return JsonResponse(
+            {
+                "generated": False,
+                "error": str(e)
+            },
+            status=500
+        )
+
 
 
 @login_required
 def upload_image(request):
-    if request.method == 'POST':
-        files = request.FILES.getlist('images')
-        title = request.POST.get('title', '').strip()
-        tags = request.POST.get('tags', '').strip()
-        description = request.POST.get('description', '').strip()
-        audio_note = request.FILES.get('audio_note')
+
+    if request.method == "POST":
+
+        import os
+
+        files = request.FILES.getlist("images")
+
+        title = request.POST.get(
+            "title",
+            ""
+        ).strip()
+
+        tags = request.POST.get(
+            "tags",
+            ""
+        ).strip()
+
+        description = request.POST.get(
+            "description",
+            ""
+        ).strip()
+
+        audio_note = request.FILES.get("audio_note")
 
         for f in files:
-            obj = ImageUpload(
-                user=request.user, 
-                image=f, 
-                title=title, 
-                tags=tags, 
-                description=description
-            )
-            if audio_note:
-                obj.audio_note = audio_note
-            obj.save()
-            compress_image(obj.image.path)
-            Thread(target=run_ai_processing, args=(obj,)).start()
-        return redirect('gallery_home')
-    return render(request, 'gallery/upload.html')
 
+            image_bytes = f.read()
+
+            compressed_bytes = compress_image(
+                image_bytes
+            )
+
+            f.seek(0)
+
+            obj = ImageUpload(
+                user=request.user,
+                image=f,
+                title=title,
+                tags=tags,
+                description=description,
+            )
+
+            obj.save()
+
+            # ------------------------------------
+            # Upload image to Supabase
+            # ------------------------------------
+            extension = os.path.splitext(
+                obj.image.name
+            )[1].lower()
+
+            filename = (
+                f"{request.user.id}/"
+                f"{obj.id}{extension}"
+            )
+
+            upload_gallery_image(
+                compressed_bytes,
+                filename
+            )
+
+            obj.supabase_url = get_public_url(
+                filename
+            )
+
+            # ------------------------------------
+            # Upload audio note to Supabase
+            # ------------------------------------
+            if audio_note:
+
+                audio_note.seek(0)
+
+                audio_bytes = audio_note.read()
+
+                audio_extension = os.path.splitext(
+                    audio_note.name
+                )[1].lower()
+
+                audio_filename = (
+                    f"{request.user.id}/"
+                    f"{obj.id}{audio_extension}"
+                )
+
+                upload_audio(
+                    audio_bytes,
+                    audio_filename
+                )
+
+                obj.audio_supabase_url = (
+                    get_audio_public_url(
+                        audio_filename
+                    )
+                )
+
+            obj.save(
+                update_fields=[
+                    "supabase_url",
+                    "audio_supabase_url",
+                ]
+            )
+
+            print(
+                f"[SUPABASE] Uploaded image: {filename}"
+            )
+
+            if audio_note:
+                print(
+                    f"[SUPABASE] Uploaded audio: {audio_filename}"
+                )
+
+            # ------------------------------------
+            # AI processing in background
+            # ------------------------------------
+            Thread(
+                target=run_ai_processing,
+                args=(
+                    obj,
+                    compressed_bytes,
+                ),
+                daemon=True
+            ).start()
+
+        return redirect("gallery_home")
+
+    return render(
+        request,
+        "gallery/upload.html",
+    )
 
 @login_required
 def generated_gallery(request):
@@ -344,33 +530,93 @@ def restore_from_trash(request, image_id):
 
 @login_required
 def delete_permanently(request, image_id):
-    image = get_object_or_404(ImageUpload, id=image_id, user=request.user)
-    image.image.delete() 
-    if image.audio_note:
-        image.audio_note.delete()
-    image.delete()  
-    return redirect('trash')
 
+    image = get_object_or_404(
+        ImageUpload,
+        id=image_id,
+        user=request.user
+    )
+
+    # -----------------------------
+    # Delete image from Supabase
+    # -----------------------------
+    try:
+
+        if image.supabase_url:
+
+            path = image.supabase_url.split(
+                "/object/public/gallery-images/"
+            )[-1]
+
+            delete_gallery_image(path)
+
+            print(
+                f"[SUPABASE] Deleted image: {path}"
+            )
+
+    except Exception as e:
+
+        print(
+            f"[SUPABASE IMAGE DELETE ERROR] {e}"
+        )
+
+    # -----------------------------
+    # Delete audio from Supabase
+    # -----------------------------
+    try:
+
+        if image.audio_supabase_url:
+
+            path = image.audio_supabase_url.split(
+                "/object/public/audio-notes/"
+            )[-1]
+
+            delete_audio(path)
+
+            print(
+                f"[SUPABASE] Deleted audio: {path}"
+            )
+
+    except Exception as e:
+
+        print(
+            f"[SUPABASE AUDIO DELETE ERROR] {e}"
+        )
+
+    image.delete()
+
+    return redirect("trash")
 
 @login_required
 @require_GET
 def live_search_api(request):
-    query = request.GET.get('q', '').strip()
-    if query == '':
-        return JsonResponse({'results': []})
-    
+
+    query = request.GET.get(
+        "q",
+        ""
+    ).strip()
+
+    if not query:
+        return JsonResponse({
+            "results": []
+        })
+
     uploaded_images = ImageUpload.objects.filter(
-       user=request.user,
-       trashed=False
+        user=request.user,
+        trashed=False
     )
 
     generated_images = GeneratedImage.objects.filter(
-       user=request.user
+        user=request.user
     )
 
-    ai_results = smart_search_filter(query, uploaded_images)
+    ai_results = smart_search_filter(
+        query,
+        uploaded_images
+    )
+
     generated_results = generated_images.filter(
-       title__icontains=query
+        title__icontains=query
     )
 
     images = list(ai_results) + list(generated_results)
@@ -379,16 +625,50 @@ def live_search_api(request):
     results = []
 
     for img in images:
-        is_generated = hasattr(img, 'prompt')
+
+        is_generated = isinstance(
+            img,
+            GeneratedImage
+        )
+
+        if is_generated:
+
+            image_url = (
+                img.generated_supabase_url
+                if img.generated_supabase_url
+                else (
+                    img.image.url
+                    if img.image
+                    else ""
+                )
+            )
+
+        else:
+            image_url = (
+                img.supabase_url
+                if img.supabase_url
+                else img.image.url
+            )
 
         results.append({
-           'id': img.id,
-           'title': img.title,
-           'image_url': img.image.url,
-           'favorite': getattr(img, 'favorite', False),
-           'type': 'generated' if is_generated else 'uploaded'
+            "id": img.id,
+            "title": img.title,
+            "image_url": image_url,
+            "favorite": getattr(
+                img,
+                "favorite",
+                False
+            ),
+            "type": (
+                "generated"
+                if is_generated
+                else "uploaded"
+            ),
         })
-    return JsonResponse({'results': results})
+
+    return JsonResponse({
+        "results": results
+    })
 
 
 @login_required
@@ -437,13 +717,27 @@ def update_album_images(request, album_id):
 
 @login_required
 def user_images_api(request):
-    images = ImageUpload.objects.filter(user=request.user, trashed=False)
+
+    images = ImageUpload.objects.filter(
+        user=request.user,
+        trashed=False
+    )
+
     data = {
-        'images': [
-            {'id': img.id, 'image_url': img.image.url, 'title': img.title or ''}
+        "images": [
+            {
+                "id": img.id,
+                "image_url": (
+                    img.supabase_url
+                    if img.supabase_url
+                    else img.image.url
+                ),
+                "title": img.title or "",
+            }
             for img in images
         ]
     }
+
     return JsonResponse(data)
 
 
@@ -505,18 +799,126 @@ class UserProfileForm(forms.ModelForm):
 
 @login_required
 def profile_edit(request):
+
     profile = request.user.userprofile
+
     if request.method == 'POST':
-        user_form = ProfileEditForm(request.POST, instance=request.user)
-        profile_form = UserProfileForm(request.POST, request.FILES, instance=profile)
+
+        user_form = ProfileEditForm(
+            request.POST,
+            instance=request.user
+        )
+
+        profile_form = UserProfileForm(
+            request.POST,
+            request.FILES,
+            instance=profile
+        )
+
         if user_form.is_valid() and profile_form.is_valid():
+
             user_form.save()
-            profile_form.save()
+
+            profile_pic = request.FILES.get(
+                "profile_pic"
+            )
+
+            if profile_pic:
+
+                # Delete old picture from Supabase
+                if profile.profile_pic_url:
+
+                    try:
+
+                        old_path = profile.profile_pic_url.split(
+                            "/object/public/profile-pictures/"
+                        )[-1]
+
+                        delete_profile_picture(
+                            old_path
+                        )
+
+                    except Exception as e:
+
+                        print(
+                            f"[PROFILE DELETE ERROR] {e}"
+                        )
+
+                image_bytes = profile_pic.read()
+
+                extension = os.path.splitext(
+                    profile_pic.name
+                )[1].lower()
+
+                filename = (
+                    f"{request.user.id}"
+                    f"{extension}"
+                )
+
+                upload_profile_picture(
+                    image_bytes,
+                    filename
+                )
+
+                profile.profile_pic_url = (
+                    get_profile_picture_url(
+                        filename
+                    )
+                )
+
+            profile.save(update_fields=["profile_pic_url"])
+
             return redirect('profile')
+
     else:
-        user_form = ProfileEditForm(instance=request.user)
-        profile_form = UserProfileForm(instance=profile)
-    return render(request, 'gallery/profile_edit.html', {
-        'user_form': user_form,
-        'profile_form': profile_form,
-    })
+
+        user_form = ProfileEditForm(
+            instance=request.user
+        )
+
+        profile_form = UserProfileForm(
+            instance=profile
+        )
+
+    return render(
+        request,
+        'gallery/profile_edit.html',
+        {
+            'user_form': user_form,
+            'profile_form': profile_form,
+        }
+    )
+
+
+@login_required
+def delete_generated(request, image_id):
+
+    image = get_object_or_404(
+        GeneratedImage,
+        id=image_id,
+        user=request.user
+    )
+
+    try:
+
+        if image.generated_supabase_url:
+
+            path = image.generated_supabase_url.split(
+                "/object/public/generated-images/"
+            )[-1]
+
+            delete_generated_image(path)
+
+            print(
+                f"[GENERATED DELETE] {path}"
+            )
+
+    except Exception as e:
+
+        print(
+            f"[GENERATED DELETE ERROR] {e}"
+        )
+
+    image.delete()
+
+    return redirect("generated_gallery")

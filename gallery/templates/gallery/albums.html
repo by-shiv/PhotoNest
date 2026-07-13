@@ -8,7 +8,7 @@
   <div class="album-list">
     {% for album in albums %}
       <div class="album-card" onclick="window.location='{% url 'album_detail' album.id %}'">
-        <div class="album-cover" style="background-image:url('{% if album.images.first %}{{ album.images.first.image.url }}{% endif %}')"></div>
+        <div class="album-cover" style="background-image:url('{% if album.images.first %}{{ album.images.first.supabase_url|default:album.images.first.image.url }}{% endif %}')"></div>
 
         <div class="album-card-body">
           <h3>{{ album.name }}</h3>

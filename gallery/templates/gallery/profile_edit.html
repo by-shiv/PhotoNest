@@ -13,10 +13,28 @@
         <div class="form-group">{{ user_form.as_p }}</div>
 
         <!-- PROFILE PIC -->
+        <!-- PROFILE PIC -->
         <div class="form-group">
           <label>Profile Picture</label>
+
           {{ profile_form.profile_pic }}
-          <img id="profile-preview" style="width:80px; border-radius:50%; margin-top:10px; display:none;" />
+
+          {% if request.user.userprofile.profile_pic_url or request.user.userprofile.profile_pic %}
+            <img id="profile-preview" src="{{ request.user.userprofile.profile_pic_url|default:request.user.userprofile.profile_pic.url }}" style="
+        width:80px;
+        height:80px;
+        border-radius:50%;
+        object-fit:cover;
+        margin-top:10px;
+      " />
+          {% else %}
+            <img id="profile-preview" style="
+        width:80px;
+        border-radius:50%;
+        margin-top:10px;
+        display:none;
+      " />
+          {% endif %}
         </div>
 
         <!-- ACTIONS -->

@@ -5,6 +5,8 @@ venv/
 # Django
 db.sqlite3
 media/
+sqlite_backup_utf8.json
+*.sqlite3
 
 # Environment Variables
 .env

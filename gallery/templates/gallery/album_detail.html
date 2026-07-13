@@ -28,7 +28,7 @@
       {% for img in images %}
         {% if img.image %}
           <a href="{% url 'image_detail' img.id %}" class="image-card-link">
-            <div class="image-card" id="img-{{ img.id }}" style="background-image:url('{{ img.image.url }}');">
+            <div class="image-card" id="img-{{ img.id }}" style="background-image:url('{{ img.supabase_url|default:img.image.url }}');">
               <!-- ACTIONS -->
               <div class="card-actions">
                 <!-- REMOVE -->

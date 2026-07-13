@@ -13,7 +13,7 @@
   <div class="image-grid">
     {% for img in images %}
       <a href="{% url 'generated_detail' img.id %}" class="image-card-link">
-        <div class="image-card gen-card" style="background-image:url('{{ img.image.url }}');">
+        <div class="image-card gen-card" style="background-image:url('{{ img.generated_supabase_url|default:img.image.url }}');">
           <span class="ai-badge">AI</span>
           <div class="gen-overlay"></div>
 

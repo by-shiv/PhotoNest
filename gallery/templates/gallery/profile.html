@@ -5,8 +5,8 @@
     <!-- HEADER -->
     <div class="profile-header card">
       <div class="profile-pic-container">
-        {% if profile.profile_pic %}
-          <img src="{{ profile.profile_pic.url }}" class="profile-pic" />
+        {% if profile.profile_pic_url or profile.profile_pic %}
+          <img src="{{ profile.profile_pic_url|default:profile.profile_pic.url }}" class="profile-pic" />
         {% else %}
           <div class="profile-pic-placeholder">👤</div>
         {% endif %}
@@ -31,7 +31,7 @@
 
       <div class="profile-grid">
         {% for img in favorites %}
-          <a href="{% url 'image_detail' img.id %}" class="profile-thumb" style="background-image:url('{{ img.image.url }}');"></a>
+          <a href="{% url 'image_detail' img.id %}" class="profile-thumb" style="background-image:url('{{ img.supabase_url|default:img.image.url }}');"></a>
         {% empty %}
           <p class="empty-note">No favorites yet</p>
         {% endfor %}
@@ -47,7 +47,7 @@
       <div class="album-list">
         {% for album in albums %}
           <a href="{% url 'album_detail' album.id %}" class="album-card">
-            <div class="album-cover" style="background-image:url('{% if album.images.first %}{{ album.images.first.image.url }}{% endif %}')"></div>
+            <div class="album-cover" style="background-image:url('{% if album.images.first %}{{ album.images.first.supabase_url|default:album.images.first.image.url }}{% endif %}')"></div>
 
             <div class="album-card-body">
               <h4>{{ album.name }}</h4>

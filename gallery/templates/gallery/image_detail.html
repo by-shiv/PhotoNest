@@ -6,151 +6,150 @@
 {% endblock %}
 
 {% block content %}
-<div class="detail-wrap">
+  <div class="detail-wrap">
+    <div class="detail-top">
+      <a href="{% url 'gallery_home' %}" class="back-link">← Back to gallery</a>
 
-  <div class="detail-top">
-    <a href="{% url 'gallery_home' %}" class="back-link">← Back to gallery</a>
+      <div class="detail-actions action-group">
+        <a href="{% url 'download_image' image.id %}" class="btn btn-secondary">Download</a>
 
-    <div class="detail-actions action-group">
-      <a href="{% url 'download_image' image.id %}" class="btn btn-secondary">Download</a>
+        <form action="{% url 'toggle_favorite' image.id %}" method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-secondary">
+            {% if image.favorite %}
+              Unfavorite
+            {% else %}
+              Favorite
+            {% endif %}
+          </button>
+        </form>
 
-      <form action="{% url 'toggle_favorite' image.id %}" method="post">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-secondary">
-          {% if image.favorite %}Unfavorite{% else %}Favorite{% endif %}
-        </button>
-      </form>
+        <form action="{% url 'toggle_archive' image.id %}" method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-secondary">
+            {% if image.archived %}
+              Unarchive
+            {% else %}
+              Archive
+            {% endif %}
+          </button>
+        </form>
 
-      <form action="{% url 'toggle_archive' image.id %}" method="post">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-secondary">
-          {% if image.archived %}Unarchive{% else %}Archive{% endif %}
-        </button>
-      </form>
-
-      <form action="{% url 'move_to_trash' image.id %}" method="post">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-danger">Trash</button>
-      </form>
-    </div>
-  </div>
-
-  <div class="detail-grid">
-
-    <!-- IMAGE -->
-    <section class="detail-media card">
-      <img src="{{ image.image.url }}" class="detail-image">
-
-      {% if image.audio_note %}
-      <div class="audio-box">
-        <audio controls>
-          <source src="{{ image.audio_note.url }}">
-        </audio>
+        <form action="{% url 'move_to_trash' image.id %}" method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">Trash</button>
+        </form>
       </div>
-      {% endif %}
-    </section>
-
-    <!-- SIDEBAR -->
-    <aside class="detail-sidebar card"
-           data-image-id="{{ image.id }}"
-           data-url="{% url 'update_image' image.id %}">
-
-      <!-- TITLE -->
-      <div class="editable-field">
-        <h1 class="view-mode">{{ image.title|default:"Untitled image" }}</h1>
-        <input type="text" class="edit-mode input edit-title" value="{{ image.title }}">
-      </div>
-
-      <p class="detail-meta">Uploaded {{ image.upload_date|date:'M d, Y' }}</p>
-
-      <!-- ACTIONS -->
-      <div class="edit-actions">
-        <button class="btn btn-secondary edit-toggle view-mode">Edit</button>
-        <button class="btn btn-secondary save-btn edit-mode">Save</button>
-        <button class="btn btn-danger cancel-btn edit-mode">Cancel</button>
-      </div>
-
-      <!-- DESCRIPTION (ALWAYS VISIBLE) -->
-      <div class="detail-block editable-field">
-        <h2>Description</h2>
-
-        <p class="view-mode">
-          {{ image.description|default:"No description added" }}
-        </p>
-
-        <textarea class="edit-mode textarea edit-description">{{ image.description }}</textarea>
-      </div>
-
-      <!-- USER TAGS (EDITABLE) -->
-      <div class="detail-block editable-field">
-        <h2>Your Tags</h2>
-
-        <div class="tag-list view-mode user-tags">
-          {% if image.tags %}
-            {% for tag in tags_list %}
-              <span class="tag">{{ tag }}</span>
-            {% endfor %}
-          {% else %}
-            <span class="tag">No tags</span>
-          {% endif %}
-        </div>
-
-        <input type="text"
-               class="edit-mode input edit-tags"
-               value="{{ image.tags }}">
-      </div>
-
-      <!-- AI TAGS (READ ONLY) -->
-      <div class="detail-block">
-        <h2>AI Tags</h2>
-
-        <div class="tag-list">
-          {% if ai_tags_list %}
-            {% for tag in ai_tags_list %}
-              <span class="tag tag-ai">{{ tag }}</span>
-            {% endfor %}
-          {% else %}
-            <span class="tag tag-ai">No AI tags</span>
-          {% endif %}
-        </div>
-      </div>
-
-      <!-- ALBUMS -->
-      {% if album_list %}
-      <div class="detail-block">
-        <h2>Albums</h2>
-        <ul class="album-links">
-          {% for album in album_list %}
-            <li><a href="{% url 'album_detail' album.id %}">{{ album.name }}</a></li>
-          {% endfor %}
-        </ul>
-      </div>
-      {% endif %}
-
-    </aside>
-  </div>
-
-  <!-- SIMILAR -->
-  <section class="similar-section">
-    <div class="section-head">
-      <h2>Similar images</h2>
-      <p>Matched using your existing tags and AI tags.</p>
     </div>
 
-    <div class="image-grid">
-      {% for item in similar_images %}
-        <a href="{% url 'image_detail' item.id %}" class="image-card">
-          <img src="{{ item.image.url }}">
-          <div class="image-card-body">
-            <h3>{{ item.title|default:"Untitled image" }}</h3>
-            <p>{{ item.upload_date|date:'M d, Y' }}</p>
+    <div class="detail-grid">
+      <!-- IMAGE -->
+      <section class="detail-media card">
+        <img src="{{ image.supabase_url|default:image.image.url }}" class="detail-image" />
+
+        {% if image.audio_supabase_url %}
+          <div class="audio-box">
+            <audio controls>
+              <source src="{{ image.audio_supabase_url }}" />Your browser does not support the audio element.
+            </audio>
           </div>
-        </a>
-      {% empty %}
-        <p class="empty-note">No similar images found yet.</p>
-      {% endfor %}
-    </div>
-  </section>
+        {% endif %}
+      </section>
 
-</div>
+      <!-- SIDEBAR -->
+      <aside class="detail-sidebar card" data-image-id="{{ image.id }}" data-url="{% url 'update_image' image.id %}">
+        <!-- TITLE -->
+        <div class="editable-field">
+          <h1 class="view-mode">{{ image.title|default:'Untitled image' }}</h1>
+          <input type="text" class="edit-mode input edit-title" value="{{ image.title }}" />
+        </div>
+
+        <p class="detail-meta">Uploaded {{ image.upload_date|date:'M d, Y' }}</p>
+
+        <!-- ACTIONS -->
+        <div class="edit-actions">
+          <button class="btn btn-secondary edit-toggle view-mode">Edit</button>
+          <button class="btn btn-secondary save-btn edit-mode">Save</button>
+          <button class="btn btn-danger cancel-btn edit-mode">Cancel</button>
+        </div>
+
+        <!-- DESCRIPTION (ALWAYS VISIBLE) -->
+        <div class="detail-block editable-field">
+          <h2>Description</h2>
+
+          <p class="view-mode">{{ image.description|default:'No description added' }}</p>
+
+          <textarea class="edit-mode textarea edit-description">{{ image.description }}</textarea>
+        </div>
+
+        <!-- USER TAGS (EDITABLE) -->
+        <div class="detail-block editable-field">
+          <h2>Your Tags</h2>
+
+          <div class="tag-list view-mode user-tags">
+            {% if image.tags %}
+              {% for tag in tags_list %}
+                <span class="tag">{{ tag }}</span>
+              {% endfor %}
+            {% else %}
+              <span class="tag">No tags</span>
+            {% endif %}
+          </div>
+
+          <input type="text" class="edit-mode input edit-tags" value="{{ image.tags }}" />
+        </div>
+
+        <!-- AI TAGS (READ ONLY) -->
+        <div class="detail-block">
+          <h2>AI Tags</h2>
+
+          <div class="tag-list">
+            {% if ai_tags_list %}
+              {% for tag in ai_tags_list %}
+                <span class="tag tag-ai">{{ tag }}</span>
+              {% endfor %}
+            {% else %}
+              <span class="tag tag-ai">No AI tags</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- ALBUMS -->
+        {% if album_list %}
+          <div class="detail-block">
+            <h2>Albums</h2>
+            <ul class="album-links">
+              {% for album in album_list %}
+                <li>
+                  <a href="{% url 'album_detail' album.id %}">{{ album.name }}</a>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+      </aside>
+    </div>
+
+    <!-- SIMILAR -->
+    <section class="similar-section">
+      <div class="section-head">
+        <h2>Similar images</h2>
+        <p>Matched using your existing tags and AI tags.</p>
+      </div>
+
+      <div class="image-grid">
+        {% for item in similar_images %}
+          <a href="{% url 'image_detail' item.id %}" class="image-card">
+            <img src="{{ item.supabase_url|default:item.image.url }}" />
+            <div class="image-card-body">
+              <h3>{{ item.title|default:'Untitled image' }}</h3>
+              <p>{{ item.upload_date|date:'M d, Y' }}</p>
+            </div>
+          </a>
+        {% empty %}
+          <p class="empty-note">No similar images found yet.</p>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
 {% endblock %}

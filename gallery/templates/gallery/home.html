@@ -8,7 +8,7 @@
     <div class="highlight-row">
       {% for img in highlights %}
         {% if img.image %}
-          <div class="highlight-cell" style="background-image:url('{{ img.image.url }}');"></div>
+          <div class="highlight-cell" style="background-image:url('{{ img.supabase_url|default:img.image.url }}');"></div>
         {% endif %}
       {% empty %}
         <div>No highlights yet!</div>
@@ -21,7 +21,7 @@
       <div class="image-grid">
         {% for img in imgs %}
           {% if img.image %}
-            <div class="image-card" id="img-{{ img.id }}" style="background-image:url('{{ img.image.url }}'); position: relative;">
+            <div class="image-card" id="img-{{ img.id }}" style="background-image:url('{{ img.supabase_url|default:img.image.url }}'); position: relative;">
               <span class="image-date">{{ img.upload_date|date:'M d' }}</span>
               <a href="{% url 'image_detail' img.id %}" class="image-link-overlay"></a>
               <div class="card-actions">
