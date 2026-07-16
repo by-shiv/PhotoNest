@@ -4,9 +4,11 @@ services:
     env: python
     plan: free
 
-    buildCommand: "./build.sh"
+    buildCommand: |
+      pip install -r requirements.txt
+      python manage.py collectstatic --noinput
+      python manage.py migrate
 
-    startCommand: "gunicorn PhotoNest.wsgi:application"
+    startCommand: gunicorn PhotoNest.wsgi:application --bind 0.0.0.0:$PORT
 
     autoDeploy: true
-    
