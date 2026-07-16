@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: photonest
+    env: python
+    plan: free
+
+    buildCommand: "./build.sh"
+
+    startCommand: "gunicorn PhotoNest.wsgi:application"
+
+    autoDeploy: true
+    
