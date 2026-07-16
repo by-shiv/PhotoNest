@@ -2,15 +2,6 @@
 env/
 venv/
 
-# Django
-db.sqlite3
-media/
-sqlite_backup_utf8.json
-*.sqlite3
-
-# Environment Variables
-.env
-
 # Python
 __pycache__/
 *.pyc
@@ -18,3 +9,29 @@ __pycache__/
 
 # VS Code
 .vscode/
+
+# Database
+db.sqlite3
+*.sqlite3
+*.sqlite3-journal
+
+# Database backups
+*.json
+!package*.json
+!tsconfig*.json
+!composer.json
+
+# Environment
+.env
+.env.*
+
+# Media
+media/
+
+# Python
+__pycache__/
+*.pyc
+
+# IDE
+.vscode/
+.idea/
